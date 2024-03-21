@@ -1,10 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import { StyledEngineProvider } from "@mui/material";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById("root");
+const root = ReactDOM.createRoot(
+  rootElement ? rootElement : document.createElement("div")
+);
+root.render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <StyledEngineProvider injectFirst>
+      <App />
+    </StyledEngineProvider>
+  </React.StrictMode>
+);
