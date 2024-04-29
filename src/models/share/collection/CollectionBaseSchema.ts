@@ -1,4 +1,5 @@
 import { TypeSetting } from "./AttributeTypeSettings";
+import { CollectionAttribute } from "./CollectionAttributes";
 
 // For the "info" section
 export interface CollectionInfo {
@@ -34,7 +35,7 @@ interface CollectionBaseSchema {
   kind: "collection";
   collectionName?: string;
   info?: CollectionInfo;
-  attributes?: TypeSetting[];
+  attributes?: CollectionAttribute[];
 }
 
 export default CollectionBaseSchema;
