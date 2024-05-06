@@ -15,7 +15,7 @@ export interface ICollectionDbModel {
 export class CollectionDbModel {
 	username!: string;
 	collectionName!: string;
-	description?: string;
+	description!: string;
 	slug!: string;
 	attributes: CollectionAttributeDbModel[] = [];
 	createdAt!: Date;

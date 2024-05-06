@@ -2,12 +2,15 @@ import { Badge, Button, IconButton, Stack, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CollectionViewer from './CollectionViewer';
 import { useContext, useState } from 'react';
-import { CreateCollectionDialog } from './CollectionController';
+import { CreateCollectionDialog } from './CollectionComponents';
 import {
 	AttributeSettingTypes,
 	TextTypeSetting
 } from '../../../models/share/collection/AttributeTypeSettings';
-import { CollectionForm } from '../../../models/forms/auth/CollectionForm';
+import {
+	CollectionForm,
+	CollectionInfo
+} from '../../../models/forms/auth/CollectionForm';
 import {
 	CollectionAttribute,
 	CollectionAttributeDbModel
@@ -18,26 +21,57 @@ import { CollectionContext } from '../../../context/CollectionContext';
 
 interface ICollectionBuilder {
 	reset(): CollectionBuilder;
-	setCollectionBase(name: string, description: string): CollectionBuilder;
+	setCollectionInfo(
+		name: string,
+		description?: string,
+		subdirectory?: string
+	): CollectionBuilder;
+	get collectionInfo(): CollectionInfo;
 	addAttributeTypeSetting(type: AttributeSettingTypes): CollectionBuilder;
-	build(): CollectionBuilder;
+	removeAttributeTypeSetting(name: string): CollectionBuilder;
+	setAttributeTypeSettings(
+		settings: CollectionAttribute[]
+	): CollectionBuilder;
+	get collectionAttributeTypeSettings(): CollectionAttribute[];
+	build(): CollectionForm;
 }
 
+/**
+ * Data for creating a collection in the dialog.
+ */
 export class CollectionBuilder implements ICollectionBuilder {
 	private form: CollectionForm = new CollectionForm();
-
-	public get collectionForm(): CollectionForm {
-		return this.form;
-	}
 
 	reset(): CollectionBuilder {
 		this.form = new CollectionForm();
 		return this;
 	}
 
-	setCollectionBase(name: string, description?: string): CollectionBuilder {
-		this.form.collectionName = name;
-		this.form.info = { displayName: name, description: description };
+	get collectionInfo(): CollectionInfo {
+		return this.form.info;
+	}
+
+	get collectionAttributeTypeSettings(): CollectionAttribute[] {
+		return this.form.attributes;
+	}
+
+	setCollectionInfo(
+		name: string,
+		description: string = '',
+		subdirectory: string = ''
+	): CollectionBuilder {
+		this.form.info = {
+			name: name,
+			description: description,
+			subdirectory: subdirectory
+		};
+		return this;
+	}
+
+	setAttributeTypeSettings(
+		settings: CollectionAttribute[]
+	): CollectionBuilder {
+		this.form.attributes = settings;
 		return this;
 	}
 	addAttributeTypeSetting(setting: AttributeSettingTypes): CollectionBuilder {
@@ -55,11 +89,18 @@ export class CollectionBuilder implements ICollectionBuilder {
 		}
 		return this;
 	}
-	build(): CollectionBuilder {
-		throw new Error('Method not implemented.');
+
+	removeAttributeTypeSetting(name: string): CollectionBuilder {
+		this.form.attributes = this.form.attributes.filter(
+			(attribute) => attribute.setting.name !== name
+		);
+		return this;
+	}
+	build(): CollectionForm {
+		return this.form;
 	}
 }
-function CollectionBuilderComponent() {
+const CollectionBuilderComponent = () => {
 	const { collections } = useContext(CollectionContext);
 
 	const [selectedCollection, setSelectedCollection] =
@@ -88,7 +129,7 @@ function CollectionBuilderComponent() {
 	}
 
 	return (
-		<>
+		<div>
 			<div className="flex flex-row h-full">
 				<div className="basis-1/4 bg-slate-100 w-full">
 					<div className="flex flex-col">
@@ -138,11 +179,10 @@ function CollectionBuilderComponent() {
 				<div className="basis-3/4 bg-slate-50 w-full">
 					{selectedCollection ? (
 						<CollectionViewer
-							title={selectedCollection?.collectionName || ''}
-							description={selectedCollection?.description || ''}
-							fields={
-								(selectedCollection?.attributes as CollectionAttributeDbModel[]) ||
-								[]
+							title={selectedCollection.collectionName}
+							description={selectedCollection.description}
+							attributes={
+								selectedCollection.attributes as CollectionAttributeDbModel[]
 							}
 						/>
 					) : null}
@@ -154,8 +194,8 @@ function CollectionBuilderComponent() {
 				onFinish={() => {}}
 				onClose={handleCloseAddCollectionDialog}
 			/>
-		</>
+		</div>
 	);
-}
+};
 
 export default CollectionBuilderComponent;

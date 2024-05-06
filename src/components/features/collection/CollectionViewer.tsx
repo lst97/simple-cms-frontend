@@ -51,11 +51,11 @@ const FieldsViewer = ({
 const CollectionViewer = ({
 	title,
 	description,
-	fields
+	attributes
 }: {
 	title: string;
 	description: string;
-	fields?: CollectionAttributeDbModel[];
+	attributes?: CollectionAttributeDbModel[];
 }) => {
 	return (
 		<div className="flex flex-col m-8">
@@ -73,7 +73,7 @@ const CollectionViewer = ({
 					</Button>
 				</div>
 			</div>
-			<FieldsViewer attributes={fields || []} />
+			<FieldsViewer attributes={attributes || []} />
 		</div>
 	);
 };
