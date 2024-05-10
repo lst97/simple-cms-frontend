@@ -8,12 +8,8 @@ import {
 } from '../../../../models/share/collection/CollectionBaseSchema';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
-	AudioExtensions,
-	ImageExtensions,
-	MediaExtensions,
 	TextContentTypes,
-	TextTypes,
-	VideoExtensions
+	TextTypes
 } from '../../../../models/share/collection/BaseSchema';
 import {
 	Button,
@@ -30,7 +26,8 @@ import {
 	AttributeSettingTypes,
 	TextTypeSetting,
 	SupportedAdvancedSettingTypes,
-	SupportedAdvancedSettings
+	SupportedAdvancedSettings,
+	TypeSetting
 } from '../../../../models/share/collection/AttributeTypeSettings';
 import Validator from '../../../../utils/Validator';
 import { TextTypeSettingsFormControl } from '../CollectionStepper';
@@ -41,7 +38,7 @@ interface TabPanelProps {
 	value: number;
 }
 
-function SettingsTabPanel(props: TabPanelProps) {
+function SettingsTabPanel(props: Readonly<TabPanelProps>) {
 	const { children, value, index, ...other } = props;
 
 	return (
@@ -66,21 +63,55 @@ function a11yProps(index: number) {
 
 export const AttributeTypesForm = ({
 	onSubmit,
+	controller,
 	type,
-	controller
+	attributeId,
+	submitButtonLabel
 }: {
-	onSubmit: (settings: AttributeSettingTypes) => void;
-	type: SupportedAttributeTypes;
-	controller: TextTypeSettingsFormControl;
+	onSubmit: (settings: TypeSetting, attributeId?: string) => void;
+	controller?: TextTypeSettingsFormControl;
+	attributeId?: string;
+	type?: SupportedAttributeTypes;
+	submitButtonLabel?: string;
 }) => {
-	const [addAnotherFieldEnabled, setAddAnotherFieldEnabled] =
-		React.useState(false);
+	// default values hook
+	const [name, setName] = React.useState('');
+	const [subtype, setSubtype] = React.useState(
+		type === 'text' ? TextTypes.short_text : ''
+	);
+	const [advancedSettingFlag, setAdvancedSettingFlag] = React.useState(0);
+	const [maxLength, setMaxLength] = React.useState(0);
+	const [minLength, setMinLength] = React.useState(0);
+
+	const [ctrl] = React.useState<TextTypeSettingsFormControl>(
+		controller ??
+			new TextTypeSettingsFormControl({
+				values: {
+					name: name,
+					subtype: subtype as TextContentTypes,
+					maxLength: maxLength,
+					minLength: minLength
+				},
+				onChanges: {
+					onNameChange: setName,
+					onMaxLengthChange: setMaxLength,
+					onMinLengthChange: setMinLength,
+					onSubtypeChange: setSubtype
+				},
+				advancedSettingCtrl: {
+					value: advancedSettingFlag,
+					onValueChange: setAdvancedSettingFlag
+				}
+			})
+	);
+
+	const [submitButtonEnable, setSubmitButtonEnable] = React.useState(false);
 
 	// required, unique, maxLength, minLength
 	const [tabValue, setTabValue] = React.useState(0);
-	const [fileType, setFileType] = React.useState<
-		ImageExtensions | AudioExtensions | VideoExtensions | MediaExtensions
-	>();
+	// const [fileType, setFileType] = React.useState<
+	// 	ImageExtensions | AudioExtensions | VideoExtensions | MediaExtensions
+	// >();
 
 	const [setting, setSetting] = React.useState<AttributeSettingTypes>();
 
@@ -92,21 +123,19 @@ export const AttributeTypesForm = ({
 			case 'number':
 				break;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [type]);
 
-	const handleAddAnotherField = () => {
+	const handleSubmit = () => {
 		if (setting) {
 			if (setting instanceof TextTypeSetting) {
 				// settings.maxLength = advancedSettingFlag & 4 ? 255 : 0;
 				// settings.minLength = advancedSettingFlag & 8 ? 1 : 0;
-				setting.isRequire = controller.settingValue & 1 ? true : false;
-				setting.isUnique = controller.settingValue & 2 ? true : false;
-				setting.textType = controller.subtype as TextContentTypes;
-				setting.name = controller.name;
+				setting.isRequire = !!(ctrl.settingValue & 1);
+				setting.isUnique = !!(ctrl.settingValue & 2);
+				setting.setTextType(ctrl.subtype);
+				setting.name = ctrl.name;
 			}
-
-			onSubmit(setting);
+			onSubmit(setting as TypeSetting, attributeId);
 		}
 	};
 	const handleSubTypeChange = (
@@ -117,7 +146,7 @@ export const AttributeTypesForm = ({
 			case TextTypes.short_text:
 			case TextTypes.long_text:
 			case TextTypes.reach_text:
-				controller.onSubtypeChange(value as TextContentTypes);
+				ctrl.onSubtypeChange(value);
 				break;
 			case 'media':
 				break;
@@ -131,27 +160,27 @@ export const AttributeTypesForm = ({
 	) => {
 		const value = event.target.value;
 		const isValid = Validator.isValidName(value);
-		setAddAnotherFieldEnabled(isValid);
-		controller.onNameChange(value);
+		setSubmitButtonEnable(isValid);
+		ctrl.onNameChange(value);
 	};
 
 	const handleAdvancedSettingsChange = (
 		advancedSettingTypes: SupportedAdvancedSettingTypes,
 		value: boolean
 	) => {
-		const prev = controller.settingValue;
+		const prev = ctrl.settingValue;
 		switch (advancedSettingTypes) {
 			case SupportedAdvancedSettings.require:
-				controller.onSettingValueChange(value ? prev | 1 : prev & ~1);
+				ctrl.onSettingValueChange(value ? prev | 1 : prev & ~1);
 				break;
 			case SupportedAdvancedSettings.unique:
-				controller.onSettingValueChange(value ? prev | 2 : prev & ~2);
+				ctrl.onSettingValueChange(value ? prev | 2 : prev & ~2);
 				break;
 			case SupportedAdvancedSettings.max_length:
-				controller.onSettingValueChange(value ? prev | 4 : prev & ~4);
+				ctrl.onSettingValueChange(value ? prev | 4 : prev & ~4);
 				break;
 			case SupportedAdvancedSettings.min_length:
-				controller.onSettingValueChange(value ? prev | 8 : prev & ~8);
+				ctrl.onSettingValueChange(value ? prev | 8 : prev & ~8);
 				break;
 		}
 	};
@@ -166,7 +195,7 @@ export const AttributeTypesForm = ({
 						row
 						aria-labelledby="text-type-radio-buttons-group-label"
 						onChange={handleSubTypeChange}
-						value={controller.subtype}
+						value={ctrl.subtype}
 						name="text-type-radio-buttons-group"
 					>
 						<FormControlLabel
@@ -229,7 +258,7 @@ export const AttributeTypesForm = ({
 								label="Name"
 								required={true}
 								helperText="No spaces allowed"
-								value={controller.name}
+								value={ctrl.name}
 								variant="outlined"
 								onChange={handleTypeNameChange}
 							/>
@@ -273,10 +302,10 @@ export const AttributeTypesForm = ({
 											control={
 												<Checkbox
 													checked={
-														controller.settingValue &
-														1
-															? true
-															: false
+														!!(
+															ctrl.settingValue &
+															1
+														)
 													}
 													onChange={(e) => {
 														handleAdvancedSettingsChange(
@@ -299,10 +328,10 @@ export const AttributeTypesForm = ({
 											control={
 												<Checkbox
 													checked={
-														controller.settingValue &
-														2
-															? true
-															: false
+														!!(
+															ctrl.settingValue &
+															2
+														)
 													}
 													onChange={(e) => {
 														handleAdvancedSettingsChange(
@@ -325,10 +354,10 @@ export const AttributeTypesForm = ({
 											control={
 												<Checkbox
 													checked={
-														controller.settingValue &
-														4
-															? true
-															: false
+														!!(
+															ctrl.settingValue &
+															4
+														)
 													}
 													onChange={(e) => {
 														handleAdvancedSettingsChange(
@@ -351,10 +380,10 @@ export const AttributeTypesForm = ({
 											control={
 												<Checkbox
 													checked={
-														controller.settingValue &
-														8
-															? true
-															: false
+														!!(
+															ctrl.settingValue &
+															8
+														)
 													}
 													onChange={(e) => {
 														handleAdvancedSettingsChange(
@@ -413,15 +442,15 @@ export const AttributeTypesForm = ({
 					/>
 				</SettingsTabPanel>
 				<Button
-					onClick={handleAddAnotherField}
+					onClick={handleSubmit}
 					variant="contained"
-					disabled={!addAnotherFieldEnabled}
+					disabled={!submitButtonEnable}
 				>
-					Add another field
+					{submitButtonLabel ?? null}
 				</Button>
 			</Box>
 		);
 	};
 
-	return <Box>{SettingTabs()}</Box>;
+	return <>{ctrl ? <Box>{SettingTabs()}</Box> : null}</>;
 };

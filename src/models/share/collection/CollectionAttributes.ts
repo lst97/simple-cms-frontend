@@ -12,7 +12,7 @@ export class CollectionAttribute {
 }
 
 export interface CollectionAttributeDbModel {
-	value: string;
+	_id: string;
 	setting: TypeSettingDbModel;
 	content: BaseContent;
 }

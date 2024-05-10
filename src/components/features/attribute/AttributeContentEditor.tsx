@@ -67,18 +67,18 @@ const AttributeContentEditor = ({
 		reach_text: ReachTextEditor
 	};
 
-	switch (attribute.setting._type) {
+	switch (attribute.setting.type) {
 		case 'text': {
 			const EditorComponent =
 				textTypeComponents[
 					(attribute.setting as TextTypeSettingDbModel)
-						._textType as keyof typeof textTypeComponents
+						.textType as keyof typeof textTypeComponents
 				];
 
 			return (
-				<div>
+				<>
 					<Typography variant="h6" sx={{ p: 1 }}>
-						{attribute.setting._name}
+						{attribute.setting.name}
 					</Typography>
 					<EditorComponent
 						value={attribute.content.value ?? ''}
@@ -94,7 +94,7 @@ const AttributeContentEditor = ({
 							});
 						}}
 					/>
-				</div>
+				</>
 			);
 		}
 		case 'code':

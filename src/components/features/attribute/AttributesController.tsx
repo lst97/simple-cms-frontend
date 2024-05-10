@@ -27,7 +27,7 @@ export const AttributesController = ({
 	};
 
 	return (
-		<div>
+		<>
 			<Paper sx={{ m: 4 }}>
 				<Box sx={{ p: 1 }}>
 					<Typography variant="h4">
@@ -55,6 +55,6 @@ export const AttributesController = ({
 			<Button variant="contained" sx={{ m: 4 }} onClick={handlePublish}>
 				Publish
 			</Button>
-		</div>
+		</>
 	);
 };

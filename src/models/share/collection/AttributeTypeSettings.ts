@@ -1,5 +1,4 @@
 import {
-	TextTypes,
 	TextSchema,
 	CodeSchema,
 	MediaTypes,
@@ -14,33 +13,46 @@ import {
 	TextContentTypes,
 	CodeLanguageTypes
 } from './BaseSchema';
+import { SupportedAttributeTypes } from './CollectionBaseSchema';
 
 export type SupportedAdvancedSettingTypes =
 	| 'require' // 1
 	| 'unique' // 2
 	| 'max_length' // 4
-	| 'min_length'; // 8
+	| 'min_length' // 8
+	| 'private'; // 16
+
+export enum SupportedAdvancedSettingsBit {
+	REQUIRE = 1,
+	UNIQUE = 2,
+	MAX_LENGTH = 4,
+	MIN_LENGTH = 8,
+	PRIVATE = 16
+}
 
 export class SupportedAdvancedSettings {
 	static require: SupportedAdvancedSettingTypes = 'require';
 	static unique: SupportedAdvancedSettingTypes = 'unique';
 	static max_length: SupportedAdvancedSettingTypes = 'max_length';
 	static min_length: SupportedAdvancedSettingTypes = 'min_length';
+	static isPrivate: SupportedAdvancedSettingTypes = 'private';
 }
 export interface TypeSettingDbModel {
-	_name: string;
-	_type: string;
-	_isRequire: boolean;
-	_isUnique: boolean;
-	_private: boolean;
+	_id: string;
+	name: string;
+	type: SupportedAttributeTypes;
+	isRequire: boolean;
+	isUnique: boolean;
+	private: boolean;
 }
 export interface TextTypeSettingDbModel extends TypeSettingDbModel {
-	_maxLength: number;
-	_minLength: number;
-	_textType: string;
+	maxLength: number;
+	minLength: number;
+	textType: TextContentTypes;
 }
 
 export type AttributeSettingTypes =
+	| TypeSetting
 	| TextTypeSetting
 	| CodeTypeSetting
 	| MediaTypeSetting
@@ -51,98 +63,42 @@ export type AttributeSettingTypes =
 	| BooleanTypeSetting
 	| DynamicTypeSetting;
 export class TypeSetting {
-	private _name: string = '';
-	private _type: string = '';
-	private _isRequire: boolean = false;
-	private _isUnique: boolean = false;
-	private _private: boolean = false;
-
-	public get name(): string {
-		return this._name;
-	}
-
-	public get type(): string {
-		return this._type;
-	}
-
-	public get isRequire(): boolean {
-		return this._isRequire;
-	}
-
-	public get isUnique(): boolean {
-		return this._isUnique;
-	}
-
-	public get private(): boolean {
-		return this._private;
-	}
-
-	public set name(value: string) {
-		this._name = value;
-	}
-
-	public set type(value: string) {
-		this._type = value;
-	}
-
-	public set isRequire(value: boolean) {
-		this._isRequire = value;
-	}
-
-	public set isUnique(value: boolean) {
-		this._isUnique = value;
-	}
-
-	public set private(value: boolean) {
-		this._private = value;
-	}
+	public name: string = '';
+	public type: string = '';
+	public isRequire: boolean = false;
+	public isUnique: boolean = false;
+	public private: boolean = false;
 }
 
 export class TextTypeSetting extends TypeSetting {
-	private _maxLength: number = 0;
-	private _minLength: number = 0;
-	private _textType: string = '';
+	public maxLength: number = 0;
+	public minLength: number = 0;
+	private textType: TextContentTypes = 'short_text';
 
 	constructor() {
 		super();
 		this.type = TextSchema.type;
-		this._textType = TextSchema.textType;
 		this.maxLength = TextSchema.maxLength;
 		this.minLength = TextSchema.minLength;
+		this.textType = TextSchema.textType;
 	}
 
-	public get textType(): TextContentTypes {
-		return this._textType as TextContentTypes;
+	public getTextType(): TextContentTypes {
+		return this.textType;
 	}
 
-	public set textType(value: TextContentTypes) {
-		this._textType = value;
-
-		if (value === TextTypes.short_text) {
-			this.maxLength = 255;
-		} else {
-			this.maxLength = 65535;
+	public setTextType(value: TextContentTypes) {
+		switch (value) {
+			case 'short_text':
+				this.maxLength = 255;
+				break;
+			case 'long_text':
+			case 'reach_text':
+				this.maxLength = 65535;
+				break;
 		}
-	}
 
-	public set maxLength(value: number) {
-		this._maxLength = value;
-	}
-
-	public set minLength(value: number) {
-		this._minLength = value;
-	}
-
-	public set isRequire(value: boolean) {
-		super.isRequire = value;
-	}
-
-	public set isUnique(value: boolean) {
-		super.isUnique = value;
-	}
-
-	public set private(value: boolean) {
-		super.private = value;
+		this.textType = value;
 	}
 }
 

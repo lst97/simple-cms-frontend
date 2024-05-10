@@ -20,4 +20,5 @@ export class CollectionDbModel {
 	attributes: CollectionAttributeDbModel[] = [];
 	createdAt!: Date;
 	updatedAt!: Date;
+	_id!: string;
 }

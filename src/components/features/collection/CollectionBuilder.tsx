@@ -11,10 +11,7 @@ import {
 	CollectionForm,
 	CollectionInfo
 } from '../../../models/forms/auth/CollectionForm';
-import {
-	CollectionAttribute,
-	CollectionAttributeDbModel
-} from '../../../models/share/collection/CollectionAttributes';
+import { CollectionAttribute } from '../../../models/share/collection/CollectionAttributes';
 import { BaseContent } from '../../../models/share/collection/AttributeContents';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
 import { CollectionContext } from '../../../context/CollectionContext';
@@ -178,13 +175,7 @@ const CollectionBuilderComponent = () => {
 				</div>
 				<div className="basis-3/4 bg-slate-50 w-full">
 					{selectedCollection ? (
-						<CollectionViewer
-							title={selectedCollection.collectionName}
-							description={selectedCollection.description}
-							attributes={
-								selectedCollection.attributes as CollectionAttributeDbModel[]
-							}
-						/>
+						<CollectionViewer slug={selectedCollection.slug} />
 					) : null}
 				</div>
 			</div>

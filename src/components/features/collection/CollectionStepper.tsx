@@ -58,6 +58,7 @@ class AdvancedTypeSettingsFormControl {
 }
 
 class TypeSettingsFormControlBase extends AdvancedTypeSettingsFormControl {
+	public id?: string;
 	public name: string;
 	public onNameChangeCallback: React.Dispatch<React.SetStateAction<string>>;
 
@@ -67,9 +68,11 @@ class TypeSettingsFormControlBase extends AdvancedTypeSettingsFormControl {
 		advancedSettingValue: number = 0,
 		onAdvancedSettingValueChangeCallback: React.Dispatch<
 			React.SetStateAction<number>
-		>
+		>,
+		id?: string
 	) {
 		super(advancedSettingValue, onAdvancedSettingValueChangeCallback);
+		this.id = id;
 		this.name = name;
 		this.onNameChangeCallback = onNameChangeCallback;
 	}
@@ -117,19 +120,24 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 		values,
 		onChanges,
 		advancedSettingCtrl
-	}: TextTypeSettingControlProps) {
+	}: TextTypeSettingControlProps = {}) {
 		super(
-			values.name,
-			onChanges.onNameChange,
-			advancedSettingCtrl.value,
-			advancedSettingCtrl.onValueChange
+			values?.name ?? '',
+			onChanges?.onNameChange ?? (() => {}),
+			advancedSettingCtrl?.value ?? 0,
+			advancedSettingCtrl?.onValueChange ?? (() => {})
 		);
-		this.maxLength = values.maxLength;
-		this.minLength = values.minLength;
-		this.subtype = 'short_text';
-		this.onMaxLengthChangeCallback = onChanges.onMaxLengthChange;
-		this.onMinLengthChangeCallback = onChanges.onMinLengthChange;
-		this.onSubtypeChangeCallback = onChanges.onSubtypeChange;
+		this.maxLength = values?.maxLength ?? 0;
+		this.minLength = values?.minLength ?? 0;
+		this.subtype = values?.subtype ?? TextTypes.short_text;
+		this.name = values?.name ?? '';
+
+		this.onMaxLengthChangeCallback =
+			onChanges?.onMaxLengthChange ?? (() => {});
+		this.onMinLengthChangeCallback =
+			onChanges?.onMinLengthChange ?? (() => {});
+		this.onSubtypeChangeCallback = onChanges?.onSubtypeChange ?? (() => {});
+		this.onNameChangeCallback = onChanges?.onNameChange ?? (() => {});
 	}
 
 	public onMaxLengthChange = (value: number) => {
@@ -145,12 +153,29 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 		this.subtype = value as TextContentTypes;
 		this.onSubtypeChangeCallback(value);
 	};
+
+	public setValues = (values: TextTypeSettingFormControlValuesProps) => {
+		this.name = values.name;
+		this.maxLength = values.maxLength;
+		this.minLength = values.minLength;
+		this.subtype = values.subtype ?? TextTypes.short_text;
+
+		this.onNameChangeCallback(values.name);
+		this.onMaxLengthChangeCallback(values.maxLength);
+		this.onMinLengthChangeCallback(values.minLength);
+		this.onSubtypeChangeCallback(values.subtype ?? TextTypes.short_text);
+	};
+
+	public setAdvancedSettingCtrlValue = (value: number) => {
+		this.settingValue = value;
+		this.onSettingValueChangeCallback(value);
+	};
 }
 
 interface TextTypeSettingControlProps {
-	values: TextTypeSettingFormControlValuesProps;
-	onChanges: TextTypeSettingFormControlOnChangesProps;
-	advancedSettingCtrl: AdvancedSettingFormControlProps;
+	values?: TextTypeSettingFormControlValuesProps;
+	onChanges?: TextTypeSettingFormControlOnChangesProps;
+	advancedSettingCtrl?: AdvancedSettingFormControlProps;
 }
 
 interface TypeSettingsControls {
@@ -468,6 +493,7 @@ export const CreateCollectionStepper = (
 						onSubmit={handleAddAnotherAttribute}
 						type={selectedAttributeType}
 						controller={ctrl.typeSettingsControls!.textCtrl!}
+						submitButtonLabel="Add another field"
 					/>
 				) : (
 					<AttributeTypesGrid onClick={handleAttributeTypeSelect} />
