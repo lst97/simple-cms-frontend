@@ -294,6 +294,7 @@ const CollectionViewer = ({
 
 	const handleEditCollection = () => {
 		setAnchorEl(null);
+		if (collection) setSelectedEditCollection(collection);
 	};
 
 	const handleDeleteCollection = () => {
@@ -388,6 +389,15 @@ const CollectionViewer = ({
 								{pendingDeleteCollection?.collectionName}?
 							</Typography>
 						}
+						onFinish={() => {}}
+					/>
+					<PlainDialog
+						open={selectedEditCollection !== null}
+						onClose={() => {
+							setSelectedEditCollection(null);
+						}}
+						title="Edit Collection"
+						content={<Typography>Not yet support</Typography>}
 						onFinish={() => {}}
 					/>
 				</div>
