@@ -8,6 +8,7 @@ interface RoutesUrls {
 	updateCollectionAttribute: string;
 	deleteCollectionAttribute: string;
 	addCollectionAttribute: string;
+	deleteCollection: string;
 	login: string;
 	register: string;
 }
@@ -59,6 +60,7 @@ export class ApiConfig {
 			updateCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}?setting={setting}&content={content}`,
 			addCollectionAttribute: `${baseUrl}/collections/{slug}/attribute`,
 			deleteCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}`,
+			deleteCollection: `${baseUrl}/collections/{slug}`,
 			login: `${baseUrl}/auth/login`,
 			register: `${baseUrl}/auth/register`
 		};

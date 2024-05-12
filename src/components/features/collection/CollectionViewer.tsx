@@ -257,7 +257,13 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	);
 };
 
-const CollectionViewer = ({ slug }: { slug: string }) => {
+const CollectionViewer = ({
+	slug,
+	onDeleted
+}: {
+	slug: string;
+	onDeleted?: (slug: string) => void;
+}) => {
 	const { collections } = useContext(CollectionContext);
 
 	const [collection, setCollection] = useState<CollectionDbModel | null>();
@@ -292,6 +298,9 @@ const CollectionViewer = ({ slug }: { slug: string }) => {
 
 	const handleDeleteCollection = () => {
 		setAnchorEl(null);
+		if (collection) {
+			setPendingDeleteCollection(collection);
+		}
 	};
 
 	const handleCollectionSettingClick = (
@@ -365,7 +374,13 @@ const CollectionViewer = ({ slug }: { slug: string }) => {
 						onClose={() => {
 							setPendingDeleteCollection(null);
 						}}
-						onConfirm={() => {}}
+						onConfirm={async () => {
+							await CollectionApiService.deleteCollection(
+								collection.slug
+							);
+							setPendingDeleteCollection(null);
+							onDeleted?.(slug);
+						}}
 						title="Delete Collection"
 						content={
 							<Typography>

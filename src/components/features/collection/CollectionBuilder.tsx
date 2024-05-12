@@ -96,7 +96,7 @@ export class CollectionBuilder implements ICollectionBuilder {
 	}
 }
 const CollectionBuilderComponent = () => {
-	const { collections } = useContext(CollectionContext);
+	const { collections, setCollections } = useContext(CollectionContext);
 
 	const [selectedCollection, setSelectedCollection] =
 		useState<CollectionDbModel | null>(null);
@@ -170,7 +170,17 @@ const CollectionBuilderComponent = () => {
 				</div>
 				<div className="basis-3/4 bg-slate-50 w-full">
 					{selectedCollection ? (
-						<CollectionViewer slug={selectedCollection.slug} />
+						<CollectionViewer
+							slug={selectedCollection.slug}
+							onDeleted={(slug: string) => {
+								setCollections(
+									collections.filter(
+										(collection) => collection.slug !== slug
+									)
+								);
+								setSelectedCollection(null);
+							}}
+						/>
 					) : null}
 				</div>
 			</div>

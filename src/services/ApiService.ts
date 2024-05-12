@@ -139,6 +139,27 @@ export class CollectionApiService extends ApiResultIndicator {
 		}
 	}
 
+	static async deleteCollection(
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().delete(
+				formatRoutes(ApiConfig.instance.routes.deleteCollection, {
+					slug: slug
+				})
+			);
+
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
+
 	/**
 	 * Updates the attributes of a collection. Include setting and content
 	 *
