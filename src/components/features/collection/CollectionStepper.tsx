@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { SupportedAttributeTypes } from '../../../models/share/collection/CollectionBaseSchema';
 import { AttributeSettingTypes } from '../../../models/share/collection/AttributeTypeSettings';
 import CollectionBaseInfoForm, {
@@ -22,6 +22,8 @@ import {
 	TextContentTypes,
 	TextTypes
 } from '../../../models/share/collection/BaseSchema';
+import { CollectionContext } from '../../../context/CollectionContext';
+import { CollectionDbModel } from '../../../models/share/collection/Collection';
 
 interface AdvancedSettingFormControlProps {
 	value: number;
@@ -258,6 +260,9 @@ export const CreateCollectionStepper = (
 	const [typeMinLength, setTypeMinLength] = React.useState(0);
 	const [subtype, setSubtype] = React.useState<string>('short_text');
 
+	// update the collection context with the new collection
+	const { collections, setCollections } = useContext(CollectionContext);
+
 	// default controllers
 	const [collectionBaseInfoCtrl] = React.useState(
 		props?.collectionBaseInfoController ??
@@ -318,7 +323,9 @@ export const CreateCollectionStepper = (
 
 	const steps = ['Configuration', 'Select type', 'Review'];
 
-	const handleNext = () => {
+	const handleNext = async () => {
+		let newCollection: CollectionDbModel;
+
 		switch (activeStep) {
 			case 0:
 				// validation
@@ -331,7 +338,10 @@ export const CreateCollectionStepper = (
 			case 1:
 				break;
 			case 2:
-				CollectionApiService.createCollection(ctrl.formBuilder.build());
+				newCollection = await CollectionApiService.createCollection(
+					ctrl.formBuilder.build()
+				);
+				setCollections([...collections, newCollection]);
 				break;
 		}
 		setActiveStep((prevActiveStep) => prevActiveStep + 1);
