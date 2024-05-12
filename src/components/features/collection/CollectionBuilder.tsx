@@ -29,7 +29,7 @@ interface ICollectionBuilder {
 	setAttributeTypeSettings(
 		settings: CollectionAttribute[]
 	): CollectionBuilder;
-	get collectionAttributeTypeSettings(): CollectionAttribute[];
+	get collectionAttributes(): CollectionAttribute[];
 	build(): CollectionForm;
 }
 
@@ -39,7 +39,7 @@ interface ICollectionBuilder {
 export class CollectionBuilder implements ICollectionBuilder {
 	private form: CollectionForm = new CollectionForm();
 
-	reset(): CollectionBuilder {
+	reset(): this {
 		this.form = new CollectionForm();
 		return this;
 	}
@@ -48,7 +48,7 @@ export class CollectionBuilder implements ICollectionBuilder {
 		return this.form.info;
 	}
 
-	get collectionAttributeTypeSettings(): CollectionAttribute[] {
+	get collectionAttributes(): CollectionAttribute[] {
 		return this.form.attributes;
 	}
 
@@ -56,7 +56,7 @@ export class CollectionBuilder implements ICollectionBuilder {
 		name: string,
 		description: string = '',
 		subdirectory: string = ''
-	): CollectionBuilder {
+	): this {
 		this.form.info = {
 			name: name,
 			description: description,
@@ -65,13 +65,11 @@ export class CollectionBuilder implements ICollectionBuilder {
 		return this;
 	}
 
-	setAttributeTypeSettings(
-		settings: CollectionAttribute[]
-	): CollectionBuilder {
+	setAttributeTypeSettings(settings: CollectionAttribute[]): this {
 		this.form.attributes = settings;
 		return this;
 	}
-	addAttributeTypeSetting(setting: AttributeSettingTypes): CollectionBuilder {
+	addAttributeTypeSetting(setting: AttributeSettingTypes): this {
 		switch (setting.constructor) {
 			case TextTypeSetting:
 				this.form.attributes?.push(
@@ -87,7 +85,7 @@ export class CollectionBuilder implements ICollectionBuilder {
 		return this;
 	}
 
-	removeAttributeTypeSetting(name: string): CollectionBuilder {
+	removeAttributeTypeSetting(name: string): this {
 		this.form.attributes = this.form.attributes.filter(
 			(attribute) => attribute.setting.name !== name
 		);
@@ -112,18 +110,15 @@ const CollectionBuilderComponent = () => {
 		setAddCollectionDialogOpen(false);
 	};
 
-	function AddCollection() {
+	const AddCollection = () => {
 		return (
-			<div
-				className="hover:bg-slate-200 hover:cursor-pointer rounded-md text-sky-600"
-				onClick={handleAddCollectionClick}
-			>
+			<Button onClick={handleAddCollectionClick}>
 				<Typography variant="body1" sx={{ padding: 1 }}>
 					+ Create new collection
 				</Typography>
-			</div>
+			</Button>
 		);
-	}
+	};
 
 	return (
 		<div>

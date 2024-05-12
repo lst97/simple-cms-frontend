@@ -1,4 +1,12 @@
-import { Box, Button, Stack, Typography } from '@mui/material';
+import {
+	Box,
+	Button,
+	IconButton,
+	Menu,
+	MenuItem,
+	Stack,
+	Typography
+} from '@mui/material';
 import {
 	CollectionAttribute,
 	CollectionAttributeDbModel
@@ -21,6 +29,8 @@ import { CollectionApiService } from '../../../services/ApiService';
 import { BaseContent } from '../../../models/share/collection/AttributeContents';
 import AttributeTypesGrid from './AttributeTypesGrid';
 import { AttributeTypesForm } from './forms/AttributeTypesForm';
+
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const [selectedAttribute, setSelectedAttribute] =
@@ -252,12 +262,43 @@ const CollectionViewer = ({ slug }: { slug: string }) => {
 
 	const [collection, setCollection] = useState<CollectionDbModel | null>();
 
+	const [pendingDeleteCollection, setPendingDeleteCollection] =
+		useState<CollectionDbModel | null>(null);
+
+	const [selectedEditCollection, setSelectedEditCollection] =
+		useState<CollectionDbModel | null>(null);
+
+	const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] =
+		useState(false);
+
 	useEffect(() => {
 		const selectedCollection = collections.find(
 			(collection) => collection.slug === slug
 		);
 		if (selectedCollection) setCollection(selectedCollection);
 	}, [collections, slug]);
+
+	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+	const collectionMenuOpen = Boolean(anchorEl);
+
+	const handleClose = () => {
+		setAnchorEl(null);
+	};
+
+	const handleEditCollection = () => {
+		setAnchorEl(null);
+	};
+
+	const handleDeleteCollection = () => {
+		setAnchorEl(null);
+	};
+
+	const handleCollectionSettingClick = (
+		event: React.MouseEvent<HTMLElement>
+	) => {
+		setAnchorEl(event.currentTarget);
+	};
 
 	return (
 		<>
@@ -272,16 +313,68 @@ const CollectionViewer = ({ slug }: { slug: string }) => {
 								{collection.description}
 							</Typography>
 						</div>
-						<div className="flex flex-row gap-2">
-							<Button variant="contained" color="secondary">
-								Cancel
-							</Button>
-							<Button variant="contained" color="primary">
-								Save
-							</Button>
+						<div>
+							<IconButton
+								aria-label="setting"
+								aria-controls={
+									collectionMenuOpen
+										? 'positioned-menu'
+										: undefined
+								}
+								aria-haspopup="true"
+								aria-expanded={
+									collectionMenuOpen ? 'true' : undefined
+								}
+								onClick={handleCollectionSettingClick}
+							>
+								<SettingsIcon />
+							</IconButton>
+							<Menu
+								id="positioned-menu"
+								aria-labelledby="positioned-button"
+								anchorEl={anchorEl}
+								open={collectionMenuOpen}
+								onClose={handleClose}
+								anchorOrigin={{
+									vertical: 'top',
+									horizontal: 'left'
+								}}
+								transformOrigin={{
+									vertical: 'top',
+									horizontal: 'left'
+								}}
+							>
+								<MenuItem disabled>
+									Collection settings
+								</MenuItem>
+								<MenuItem onClick={handleEditCollection}>
+									Edit
+								</MenuItem>
+								<MenuItem
+									onClick={handleDeleteCollection}
+									sx={{ color: 'red' }}
+								>
+									Delete
+								</MenuItem>
+							</Menu>
 						</div>
 					</div>
 					<FieldsViewer collection={collection} />
+					<ConfirmationDialog
+						open={pendingDeleteCollection !== null}
+						onClose={() => {
+							setPendingDeleteCollection(null);
+						}}
+						onConfirm={() => {}}
+						title="Delete Collection"
+						content={
+							<Typography>
+								Are you sure you want to delete the collection -{' '}
+								{pendingDeleteCollection?.collectionName}?
+							</Typography>
+						}
+						onFinish={() => {}}
+					/>
 				</div>
 			) : null}
 		</>

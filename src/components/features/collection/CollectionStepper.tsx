@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SupportedAttributeTypes } from '../../../models/share/collection/CollectionBaseSchema';
 import { AttributeSettingTypes } from '../../../models/share/collection/AttributeTypeSettings';
-import CollectionBaseInfoForm from './forms/CollectionBaseInfoForm';
+import CollectionBaseInfoForm, {
+	CollectionBaseInfoFormControl
+} from './forms/CollectionBaseInfoForm';
 import {
 	Box,
 	Button,
@@ -21,22 +23,6 @@ import {
 	TextTypes
 } from '../../../models/share/collection/BaseSchema';
 
-interface CollectionFormControllerProps {
-	onNameChange?: React.Dispatch<React.SetStateAction<string>>;
-	onDescriptionChange?: React.Dispatch<React.SetStateAction<string>>;
-	onSubdirectoryChange?: React.Dispatch<React.SetStateAction<string>>;
-	onAttributeTypeSettingsChange?: React.Dispatch<
-		React.SetStateAction<CollectionAttribute[]>
-	>;
-}
-
-interface CollectionFormValueProps {
-	name?: string;
-	description?: string;
-	subdirectory?: string;
-	attributeTypeSettings?: CollectionAttribute[];
-}
-
 interface AdvancedSettingFormControlProps {
 	value: number;
 	onValueChange: React.Dispatch<React.SetStateAction<number>>;
@@ -44,47 +30,51 @@ interface AdvancedSettingFormControlProps {
 
 class AdvancedTypeSettingsFormControl {
 	public settingValue: number;
-	public onSettingValueChangeCallback: React.Dispatch<
-		React.SetStateAction<number>
-	>;
+	public onSettingValueChange: React.Dispatch<React.SetStateAction<number>>;
 
 	constructor(
-		value: number,
-		onValueChangeCallback: React.Dispatch<React.SetStateAction<number>>
+		values: { value: number },
+		onChanges: {
+			onValueChange: React.Dispatch<React.SetStateAction<number>>;
+		}
 	) {
-		this.settingValue = value;
-		this.onSettingValueChangeCallback = onValueChangeCallback;
+		this.settingValue = values.value;
+		this.onSettingValueChange = onChanges.onValueChange;
 	}
 }
 
 class TypeSettingsFormControlBase extends AdvancedTypeSettingsFormControl {
 	public id?: string;
 	public name: string;
-	public onNameChangeCallback: React.Dispatch<React.SetStateAction<string>>;
+	public onNameChange: React.Dispatch<React.SetStateAction<string>>;
 
 	constructor(
-		name: string,
-		onNameChangeCallback: React.Dispatch<React.SetStateAction<string>>,
-		advancedSettingValue: number = 0,
-		onAdvancedSettingValueChangeCallback: React.Dispatch<
-			React.SetStateAction<number>
-		>,
+		values: { name: string; advancedSettingValue: number },
+		onChanges: {
+			onNameChange: React.Dispatch<React.SetStateAction<string>>;
+			onAdvancedSettingValueChange: React.Dispatch<
+				React.SetStateAction<number>
+			>;
+		},
 		id?: string
 	) {
-		super(advancedSettingValue, onAdvancedSettingValueChangeCallback);
+		super(
+			{ value: values.advancedSettingValue },
+			{ onValueChange: onChanges.onAdvancedSettingValueChange }
+		);
 		this.id = id;
-		this.name = name;
-		this.onNameChangeCallback = onNameChangeCallback;
+		this.name = values.name;
+		this.onNameChange = onChanges.onNameChange;
 	}
 
-	public onNameChange = (value: string) => {
+	public onNameChangeCallback = (value: string) => {
 		this.name = value;
-		this.onNameChangeCallback(value);
+		this.onNameChange(value);
 	};
 
-	public onSettingValueChange = (value: number) => {
+	public onSettingValueChangeCallback = (value: number) => {
 		this.settingValue = value;
-		this.onSettingValueChangeCallback(value);
+		this.onSettingValueChange(value);
 	};
 }
 
@@ -102,6 +92,7 @@ interface TextTypeSettingFormControlOnChangesProps {
 	onSubtypeChange: React.Dispatch<React.SetStateAction<string>>;
 }
 
+export type AttributeTypeSettingsControl = TextTypeSettingsFormControl;
 export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 	public subtype: TextContentTypes;
 	public maxLength: number;
@@ -122,10 +113,14 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 		advancedSettingCtrl
 	}: TextTypeSettingControlProps = {}) {
 		super(
-			values?.name ?? '',
-			onChanges?.onNameChange ?? (() => {}),
-			advancedSettingCtrl?.value ?? 0,
-			advancedSettingCtrl?.onValueChange ?? (() => {})
+			{
+				name: values?.name ?? '',
+				advancedSettingValue: advancedSettingCtrl?.value ?? 0
+			},
+			{
+				onNameChange: onChanges?.onNameChange ?? (() => {}),
+				onAdvancedSettingValueChange: () => {}
+			}
 		);
 		this.maxLength = values?.maxLength ?? 0;
 		this.minLength = values?.minLength ?? 0;
@@ -178,106 +173,58 @@ interface TextTypeSettingControlProps {
 	advancedSettingCtrl?: AdvancedSettingFormControlProps;
 }
 
-interface TypeSettingsControls {
-	textCtrl?: TextTypeSettingsFormControl;
+interface CollectionFormControllersProps {
+	collectionBaseInfoController: CollectionBaseInfoFormControl;
+	attributeTypeSettingsController: AttributeTypeSettingsControl;
 }
-export class CollectionFormController {
-	private collectionBuilder: CollectionBuilder;
-	public onNameChangeCallback?: React.Dispatch<React.SetStateAction<string>>;
-	public onDescriptionChangeCallback?: React.Dispatch<
-		React.SetStateAction<string>
-	>;
-	public onSubdirectoryChangeCallback?: React.Dispatch<
-		React.SetStateAction<string>
-	>;
-	public onAttributeTypeSettingsChangeCallback?: React.Dispatch<
-		React.SetStateAction<CollectionAttribute[]>
-	>;
 
-	public typeSettingsControls?: TypeSettingsControls;
+export class CollectionFormController {
+	private collectionBaseInfoCtrl: CollectionBaseInfoFormControl;
+	private collectionAttributeSettingFormCtrl: AttributeTypeSettingsControl;
+
+	// Collection from which send to backend
+	private collectionBuilder: CollectionBuilder;
 
 	constructor(
-		{
-			name,
-			description,
-			subdirectory,
-			attributeTypeSettings
-		}: CollectionFormValueProps = {},
-		{
-			onNameChange,
-			onDescriptionChange,
-			onSubdirectoryChange,
-			onAttributeTypeSettingsChange
-		}: CollectionFormControllerProps = {},
-		typeSettingsControls: TypeSettingsControls = {}
+		collectionBaseInfoController: CollectionBaseInfoFormControl,
+		attributeTypeSettingsController: AttributeTypeSettingsControl
 	) {
+		// Collection from which send to backend
 		this.collectionBuilder = new CollectionBuilder();
 
-		// Set initial values
-		this.collectionBuilder.setCollectionInfo(
-			name ?? '',
-			description,
-			subdirectory
-		);
-		this.collectionBuilder.setAttributeTypeSettings(
-			attributeTypeSettings ?? []
-		);
+		// Set controllers
+		this.collectionBaseInfoCtrl = collectionBaseInfoController;
+		this.collectionAttributeSettingFormCtrl =
+			attributeTypeSettingsController;
+	}
+	get collectionBaseInfoController() {
+		return this.collectionBaseInfoCtrl;
+	}
 
-		// Set callbacks
-		this.onNameChangeCallback = onNameChange;
-		this.onDescriptionChangeCallback = onDescriptionChange;
-		this.onSubdirectoryChangeCallback = onSubdirectoryChange;
-		this.onAttributeTypeSettingsChangeCallback =
-			onAttributeTypeSettingsChange;
-		this.typeSettingsControls = typeSettingsControls;
+	get attributeTypeSettingsController() {
+		return this.collectionAttributeSettingFormCtrl;
 	}
 
 	get collectionInfo() {
 		return this.collectionBuilder.collectionInfo;
 	}
 
-	get collectionAttributeTypeSettings() {
-		return this.collectionBuilder.collectionAttributeTypeSettings;
+	get collectionAttributesSettings() {
+		return this.collectionBuilder.collectionAttributes.map(
+			(attribute) => attribute.setting
+		);
+	}
+
+	get collectionAttributes() {
+		return this.collectionBuilder.collectionAttributes;
 	}
 
 	get formBuilder() {
 		return this.collectionBuilder;
 	}
-
-	onNameChange = (value: string) => {
-		this.collectionBuilder.setCollectionInfo(
-			value,
-			this.collectionInfo.description,
-			this.collectionInfo.subdirectory
-		);
-		this.onNameChangeCallback?.(value);
-	};
-
-	onDescriptionChange = (value: string) => {
-		this.collectionBuilder.setCollectionInfo(
-			this.collectionInfo.name,
-			value,
-			this.collectionInfo.subdirectory
-		);
-		this.onDescriptionChangeCallback?.(value);
-	};
-
-	onSubdirectoryChange = (value: string) => {
-		this.collectionBuilder.setCollectionInfo(
-			this.collectionInfo.name,
-			this.collectionInfo.description,
-			value
-		);
-		this.onSubdirectoryChangeCallback?.(value);
-	};
-
-	onAttributeTypeSettingsChange = (settings: CollectionAttribute[]) => {
-		this.collectionBuilder.setAttributeTypeSettings(settings);
-		this.onAttributeTypeSettingsChangeCallback?.(settings);
-	};
 }
 export const CreateCollectionStepper = (
-	controller?: CollectionFormController
+	props?: CollectionFormControllersProps
 ) => {
 	// Stepper control
 	const [previousStepDisabled, setPreviousStepDisabled] =
@@ -285,126 +232,101 @@ export const CreateCollectionStepper = (
 	const [nextStepDisabled, setNextStepDisabled] = React.useState(true);
 	const [activeStep, setActiveStep] = React.useState(0);
 
+	// Collection base info hook
 	const [collectionNameInput, setCollectionNameInput] = React.useState(
-		controller?.collectionInfo.name ?? ''
+		props?.collectionBaseInfoController?.values.name ?? ''
 	);
 	const [collectionSubdirectoryInput, setCollectionSubdirectoryInput] =
-		React.useState(controller?.collectionInfo.subdirectory ?? '');
+		React.useState(
+			props?.collectionBaseInfoController?.values.subdirectory ?? ''
+		);
 	const [collectionDescriptionInput, setCollectionDescriptionInput] =
-		React.useState(controller?.collectionInfo.description ?? '');
-	const [
-		collectionAttributeTypeSettings,
-		setCollectionAttributeTypeSettings
-	] = React.useState(controller?.collectionAttributeTypeSettings ?? []);
-
-	const [ctrl] = React.useState<CollectionFormController>(
-		controller ?? new CollectionFormController()
-	);
+		React.useState(
+			props?.collectionBaseInfoController?.values.description ?? ''
+		);
 
 	// state
 	const [selectedAttributeType, setSelectedAttributeType] =
 		React.useState<SupportedAttributeTypes | null>(null);
 
-	// type setting controls
-	const [advancedSettingValue, setAdvancedSettingValue] = React.useState(0);
-	const [typeName, setTypeName] = React.useState('');
+	// type setting hook
+	const [attributeName, setAttributeName] = React.useState('');
+	const [advancedSettingValue, setAdvancedSettingValue] = React.useState(
+		props?.attributeTypeSettingsController.settingValue ?? 0
+	);
 	const [typeMaxLength, setTypeMaxLength] = React.useState(0);
 	const [typeMinLength, setTypeMinLength] = React.useState(0);
 	const [subtype, setSubtype] = React.useState<string>('short_text');
 
+	// default controllers
+	const [collectionBaseInfoCtrl] = React.useState(
+		props?.collectionBaseInfoController ??
+			new CollectionBaseInfoFormControl({
+				values: {
+					name: collectionNameInput,
+					description: collectionDescriptionInput,
+					subdirectory: collectionSubdirectoryInput
+				},
+				onChanges: {
+					onNameChange: setCollectionNameInput,
+					onDescriptionChange: setCollectionDescriptionInput,
+					onSubdirectoryChange: setCollectionSubdirectoryInput
+				}
+			})
+	);
+	const [collectionAttributeSettingFormCtrl] = React.useState(
+		props?.attributeTypeSettingsController ??
+			new TextTypeSettingsFormControl({
+				values: {
+					name: attributeName,
+					maxLength: typeMaxLength,
+					minLength: typeMinLength,
+					subtype: subtype as TextContentTypes
+				},
+				onChanges: {
+					onNameChange: setAttributeName,
+					onMaxLengthChange: setTypeMaxLength,
+					onMinLengthChange: setTypeMinLength,
+					onSubtypeChange: setSubtype
+				},
+				advancedSettingCtrl: {
+					value: advancedSettingValue,
+					onValueChange: setAdvancedSettingValue
+				}
+			})
+	);
+
+	const [ctrl] = React.useState(
+		new CollectionFormController(
+			collectionBaseInfoCtrl,
+			collectionAttributeSettingFormCtrl
+		)
+	);
+
+	useEffect(() => {
+		ctrl.formBuilder.setCollectionInfo(
+			collectionNameInput,
+			collectionDescriptionInput,
+			collectionSubdirectoryInput
+		);
+	}, [
+		collectionDescriptionInput,
+		collectionNameInput,
+		collectionSubdirectoryInput,
+		ctrl.formBuilder
+	]);
+
 	const steps = ['Configuration', 'Select type', 'Review'];
-
-	React.useEffect(() => {
-		if (ctrl.onNameChangeCallback === undefined) {
-			ctrl.onNameChangeCallback = setCollectionNameInput;
-		}
-		if (ctrl.onDescriptionChangeCallback === undefined) {
-			ctrl.onDescriptionChangeCallback = setCollectionDescriptionInput;
-		}
-		if (ctrl.onSubdirectoryChangeCallback === undefined) {
-			ctrl.onSubdirectoryChangeCallback = setCollectionSubdirectoryInput;
-		}
-		if (ctrl.onAttributeTypeSettingsChangeCallback === undefined) {
-			ctrl.onAttributeTypeSettingsChangeCallback =
-				setCollectionAttributeTypeSettings;
-		}
-
-		if (ctrl.typeSettingsControls === undefined) {
-			ctrl.typeSettingsControls = {
-				textCtrl: new TextTypeSettingsFormControl({
-					values: {
-						name: typeName,
-						maxLength: typeMaxLength,
-						minLength: typeMinLength,
-						subtype: subtype as TextContentTypes
-					},
-					onChanges: {
-						onNameChange: setTypeName,
-						onMaxLengthChange: setTypeMaxLength,
-						onMinLengthChange: setTypeMinLength,
-						onSubtypeChange: setSubtype
-					},
-					advancedSettingCtrl: {
-						value: advancedSettingValue,
-						onValueChange: setAdvancedSettingValue
-					}
-				})
-			};
-		} else {
-			if (ctrl.typeSettingsControls.textCtrl === undefined) {
-				ctrl.typeSettingsControls.textCtrl =
-					new TextTypeSettingsFormControl({
-						values: {
-							name: typeName,
-							maxLength: typeMaxLength,
-							minLength: typeMinLength,
-							subtype: subtype as TextContentTypes
-						},
-						onChanges: {
-							onNameChange: setTypeName,
-							onMaxLengthChange: setTypeMaxLength,
-							onMinLengthChange: setTypeMinLength,
-							onSubtypeChange: setSubtype
-						},
-						advancedSettingCtrl: {
-							value: advancedSettingValue,
-							onValueChange: setAdvancedSettingValue
-						}
-					});
-			}
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const handleCollectionNameChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const value = event.target.value.trim();
-		ctrl.onNameChange(value);
-
-		if (value === '') {
-			setNextStepDisabled(true);
-		} else {
-			setNextStepDisabled(false);
-		}
-	};
-	const handleCollectionDescriptionChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		ctrl.onDescriptionChange(event.target.value.trim());
-	};
-
-	const handleCollectionSubdirectoryChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		ctrl.onSubdirectoryChange(event.target.value.trim());
-	};
 
 	const handleNext = () => {
 		switch (activeStep) {
 			case 0:
 				// validation
+				ctrl.formBuilder.setCollectionInfo(
+					collectionNameInput,
+					collectionDescriptionInput,
+					collectionSubdirectoryInput
+				);
 				break;
 			case 1:
 				break;
@@ -419,7 +341,7 @@ export const CreateCollectionStepper = (
 		switch (activeStep) {
 			// Base collection settings from step 1
 			case 0:
-				if (ctrl.collectionInfo.name.trim() === '') {
+				if (collectionNameInput.trim() === '') {
 					setNextStepDisabled(true);
 				} else {
 					setNextStepDisabled(false);
@@ -428,7 +350,7 @@ export const CreateCollectionStepper = (
 				setPreviousStepDisabled(false);
 				break;
 			case 1:
-				if (ctrl.collectionAttributeTypeSettings.length === 0) {
+				if (ctrl.collectionAttributes.length === 0) {
 					setNextStepDisabled(true);
 				} else {
 					setNextStepDisabled(false);
@@ -441,6 +363,14 @@ export const CreateCollectionStepper = (
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeStep]);
+
+	useEffect(() => {
+		if (collectionNameInput.trim() === '') {
+			setNextStepDisabled(true);
+		} else {
+			setNextStepDisabled(false);
+		}
+	}, [collectionNameInput]);
 
 	const handleBack = () => {
 		setActiveStep((prevActiveStep) => {
@@ -472,18 +402,7 @@ export const CreateCollectionStepper = (
 				// collection base setup
 				return (
 					<CollectionBaseInfoForm
-						values={{
-							name: collectionNameInput,
-							description: collectionDescriptionInput,
-							subdirectory: collectionSubdirectoryInput
-						}}
-						onChanges={{
-							onNameChange: handleCollectionNameChange,
-							onDescriptionChange:
-								handleCollectionDescriptionChange,
-							onSubdirectoryChange:
-								handleCollectionSubdirectoryChange
-						}}
+						controller={collectionBaseInfoCtrl}
 					/>
 				);
 			// attribute type selection
@@ -492,8 +411,8 @@ export const CreateCollectionStepper = (
 					<AttributeTypesForm
 						onSubmit={handleAddAnotherAttribute}
 						type={selectedAttributeType}
-						controller={ctrl.typeSettingsControls!.textCtrl!}
-						submitButtonLabel="Add another field"
+						controller={collectionAttributeSettingFormCtrl}
+						submitButtonLabel="Add another attribute"
 					/>
 				) : (
 					<AttributeTypesGrid onClick={handleAttributeTypeSelect} />
@@ -503,7 +422,7 @@ export const CreateCollectionStepper = (
 				return (
 					<StepReview
 						info={ctrl.collectionInfo}
-						attributes={ctrl.collectionAttributeTypeSettings}
+						attributes={ctrl.collectionAttributes}
 					/>
 				);
 			default:

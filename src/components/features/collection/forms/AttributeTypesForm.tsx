@@ -75,11 +75,13 @@ export const AttributeTypesForm = ({
 	submitButtonLabel?: string;
 }) => {
 	// default values hook
-	const [name, setName] = React.useState('');
+	const [name, setName] = React.useState(controller?.name ?? '');
 	const [subtype, setSubtype] = React.useState(
 		type === 'text' ? TextTypes.short_text : ''
 	);
-	const [advancedSettingFlag, setAdvancedSettingFlag] = React.useState(0);
+	const [advancedSettingFlag, setAdvancedSettingFlag] = React.useState(
+		controller?.settingValue ?? 0
+	);
 	const [maxLength, setMaxLength] = React.useState(0);
 	const [minLength, setMinLength] = React.useState(0);
 
@@ -128,12 +130,13 @@ export const AttributeTypesForm = ({
 	const handleSubmit = () => {
 		if (setting) {
 			if (setting instanceof TextTypeSetting) {
-				// settings.maxLength = advancedSettingFlag & 4 ? 255 : 0;
-				// settings.minLength = advancedSettingFlag & 8 ? 1 : 0;
-				setting.isRequire = !!(ctrl.settingValue & 1);
-				setting.isUnique = !!(ctrl.settingValue & 2);
+				setting.isRequire = !!(advancedSettingFlag & 1);
+				setting.isUnique = !!(advancedSettingFlag & 2);
 				setting.setTextType(ctrl.subtype);
-				setting.name = ctrl.name;
+				setting.name = name;
+
+				ctrl.onNameChange(name);
+				ctrl.onSettingValueChange(advancedSettingFlag);
 			}
 			onSubmit(setting as TypeSetting, attributeId);
 		}
@@ -161,6 +164,7 @@ export const AttributeTypesForm = ({
 		const value = event.target.value;
 		const isValid = Validator.isValidName(value);
 		setSubmitButtonEnable(isValid);
+		setName(value);
 		ctrl.onNameChange(value);
 	};
 
@@ -168,19 +172,23 @@ export const AttributeTypesForm = ({
 		advancedSettingTypes: SupportedAdvancedSettingTypes,
 		value: boolean
 	) => {
-		const prev = ctrl.settingValue;
+		const prev = advancedSettingFlag;
 		switch (advancedSettingTypes) {
 			case SupportedAdvancedSettings.require:
 				ctrl.onSettingValueChange(value ? prev | 1 : prev & ~1);
+				setAdvancedSettingFlag(value ? prev | 1 : prev & ~1);
 				break;
 			case SupportedAdvancedSettings.unique:
 				ctrl.onSettingValueChange(value ? prev | 2 : prev & ~2);
+				setAdvancedSettingFlag(value ? prev | 2 : prev & ~2);
 				break;
 			case SupportedAdvancedSettings.max_length:
 				ctrl.onSettingValueChange(value ? prev | 4 : prev & ~4);
+				setAdvancedSettingFlag(value ? prev | 4 : prev & ~4);
 				break;
 			case SupportedAdvancedSettings.min_length:
 				ctrl.onSettingValueChange(value ? prev | 8 : prev & ~8);
+				setAdvancedSettingFlag(value ? prev | 8 : prev & ~8);
 				break;
 		}
 	};
@@ -258,7 +266,7 @@ export const AttributeTypesForm = ({
 								label="Name"
 								required={true}
 								helperText="No spaces allowed"
-								value={ctrl.name}
+								value={name}
 								variant="outlined"
 								onChange={handleTypeNameChange}
 							/>
@@ -303,7 +311,7 @@ export const AttributeTypesForm = ({
 												<Checkbox
 													checked={
 														!!(
-															ctrl.settingValue &
+															advancedSettingFlag &
 															1
 														)
 													}
@@ -329,7 +337,7 @@ export const AttributeTypesForm = ({
 												<Checkbox
 													checked={
 														!!(
-															ctrl.settingValue &
+															advancedSettingFlag &
 															2
 														)
 													}
@@ -355,7 +363,7 @@ export const AttributeTypesForm = ({
 												<Checkbox
 													checked={
 														!!(
-															ctrl.settingValue &
+															advancedSettingFlag &
 															4
 														)
 													}
@@ -381,7 +389,7 @@ export const AttributeTypesForm = ({
 												<Checkbox
 													checked={
 														!!(
-															ctrl.settingValue &
+															advancedSettingFlag &
 															8
 														)
 													}
