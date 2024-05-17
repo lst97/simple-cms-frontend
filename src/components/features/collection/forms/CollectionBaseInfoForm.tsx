@@ -1,6 +1,9 @@
-import { TextField } from '@mui/material';
+import { TextField, Tooltip, Typography } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
 import { useState } from 'react';
-
+import { Config as ApiServiceConfig } from '@lst97/common-restful';
+import { SubdirectoryRegex } from '../../../../schemas/SubdirectorySchema';
+import { extractSlug } from '../../../../utils/Misc';
 /**
  * initial values for the collection base info form
  */
@@ -79,48 +82,124 @@ const CollectionBaseInfoForm = ({
 		}
 	);
 
+	const [pendingSubdirectory, setPendingSubdirectory] = useState<string>('');
+
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		if (event.key === 'Backspace' && pendingSubdirectory === '') {
+			event.preventDefault();
+			const { slug, modifiedUrl } = extractSlug(values.subdirectory);
+			setValues({
+				...values,
+				subdirectory: modifiedUrl
+			});
+			controller?.onChanges.onSubdirectoryChange(modifiedUrl);
+			setPendingSubdirectory(slug ?? '');
+		}
+	};
+
 	return (
-		<div className="flex flex-col justify-between gap-2">
-			<TextField
-				id="create-collection-stepper-1-display-name"
-				label="Display name"
-				required={true}
-				variant="outlined"
-				onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-					setValues({ ...values, name: event.target.value });
-					controller?.onChanges.onNameChange(event.target.value);
-				}}
-				value={values.name}
-			/>
+		<Grid container spacing={2}>
+			<Grid xs={6}>
+				<TextField
+					id="create-collection-stepper-1-display-name"
+					sx={{ width: '100%' }}
+					label="Display name"
+					required={true}
+					variant="outlined"
+					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+						setValues({ ...values, name: event.target.value });
+						controller?.onChanges.onNameChange(event.target.value);
+					}}
+					value={values.name}
+				/>
+			</Grid>
+			<Grid xs={6}>
+				<TextField
+					id="create-collection-stepper-1-description"
+					sx={{ width: '100%' }}
+					label="Description"
+					required={false}
+					variant="outlined"
+					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+						setValues({
+							...values,
+							description: event.target.value
+						});
+						controller?.onChanges.onDescriptionChange(
+							event.target.value
+						);
+					}}
+					value={values.description}
+				/>
+			</Grid>
 
-			<TextField
-				id="create-collection-stepper-1-description"
-				label="Description"
-				required={false}
-				variant="outlined"
-				onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-					setValues({ ...values, description: event.target.value });
-					controller?.onChanges.onDescriptionChange(
-						event.target.value
-					);
-				}}
-				value={values.description}
-			/>
+			<Grid xs={12}>
+				<TextField
+					sx={{ width: '100%' }}
+					id="create-collection-stepper-1-subdirectory"
+					label="Subdirectory"
+					required={false}
+					variant="outlined"
+					helperText={
+						<Tooltip
+							title={`${
+								ApiServiceConfig.instance().baseUrl
+							}/collections/${values.subdirectory.slice(0, -1)}`}
+						>
+							<Typography
+								sx={{
+									maxWidth: '75%',
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap',
+									direction: 'rtl', // Right-to-left text direction
+									textAlign: 'left' // Align text to the left (within RTL)
+								}}
+							>{`${
+								ApiServiceConfig.instance().baseUrl
+							}/collections/${values.subdirectory.slice(
+								0,
+								-1
+							)}`}</Typography>
+						</Tooltip>
+					}
+					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+						const value = event.target.value.trim();
 
-			<TextField
-				id="create-collection-stepper-1-subdirectory"
-				label="Subdirectory"
-				required={false}
-				variant="outlined"
-				onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-					setValues({ ...values, subdirectory: event.target.value });
-					controller?.onChanges.onSubdirectoryChange(
-						event.target.value
-					);
-				}}
-				value={values.subdirectory}
-			/>
-		</div>
+						if (value === '') {
+							setPendingSubdirectory(value);
+							return;
+						}
+
+						if (
+							RegExp(
+								SubdirectoryRegex.collectionSubdirectoryRegex
+							).test(value) === false ||
+							value.startsWith('/')
+						) {
+							return;
+						}
+
+						if (value.endsWith('/')) {
+							setValues({
+								...values,
+								subdirectory: values.subdirectory + value
+							});
+							setPendingSubdirectory('');
+							controller?.onChanges.onSubdirectoryChange(
+								values.subdirectory + value
+							);
+
+							return;
+						}
+
+						setPendingSubdirectory(value);
+					}}
+					value={pendingSubdirectory}
+					onKeyDown={handleKeyDown}
+				/>
+			</Grid>
+		</Grid>
 	);
 };
 
