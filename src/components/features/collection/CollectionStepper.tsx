@@ -1,5 +1,8 @@
 import React, { useContext, useEffect } from 'react';
-import { SupportedAttributeTypes } from '../../../models/share/collection/CollectionBaseSchema';
+import {
+	SupportedAttributeTypes,
+	SupportedAttributes
+} from '../../../models/share/collection/CollectionBaseSchema';
 import { AttributeSettingTypes } from '../../../models/share/collection/AttributeTypeSettings';
 import CollectionBaseInfoForm, {
 	CollectionBaseInfoFormControl
@@ -19,13 +22,16 @@ import AttributeTypesGrid from './AttributeTypesGrid';
 import { CollectionBuilder } from './CollectionBuilder';
 import { AttributeTypesForm } from './forms/AttributeTypesForm';
 import {
+	ImageExtensions,
+	MediaContentTypes,
+	MediaExtensions,
+	MediaTypes,
 	TextContentTypes,
 	TextTypes
 } from '../../../models/share/collection/BaseSchema';
 import { CollectionContext } from '../../../context/CollectionContext';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
-
-interface AdvancedSettingFormControlProps {
+export interface AdvancedSettingFormControlProps {
 	value: number;
 	onValueChange: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -80,21 +86,45 @@ class TypeSettingsFormControlBase extends AdvancedTypeSettingsFormControl {
 	};
 }
 
-interface TextTypeSettingFormControlValuesProps {
+export interface TextTypeSettingFormControlValuesProps {
 	name: string;
 	maxLength: number;
 	minLength: number;
 	subtype?: TextContentTypes;
 }
 
-interface TextTypeSettingFormControlOnChangesProps {
+export interface MediaTypeSettingFormControlValuesProps {
+	name: string;
+	// for gallery || video length
+	maxLength: number;
+	minLength: number;
+	// for a single file size
+	minSize: number;
+	maxSize: number;
+	subtype?: MediaContentTypes;
+}
+
+export interface TextTypeSettingFormControlOnChangesProps {
 	onNameChange: React.Dispatch<React.SetStateAction<string>>;
 	onMaxLengthChange: React.Dispatch<React.SetStateAction<number>>;
 	onMinLengthChange: React.Dispatch<React.SetStateAction<number>>;
+	onSubtypeChange: React.Dispatch<
+		React.SetStateAction<TextContentTypes | MediaContentTypes>
+	>;
+}
+
+export interface MediaTypeSettingFormControlOnChangesProps {
+	onNameChange: React.Dispatch<React.SetStateAction<string>>;
+	onMaxLengthChange: React.Dispatch<React.SetStateAction<number>>;
+	onMinLengthChange: React.Dispatch<React.SetStateAction<number>>;
+	onMaxSizeChange: React.Dispatch<React.SetStateAction<number>>;
+	onMinSizeChange: React.Dispatch<React.SetStateAction<number>>;
 	onSubtypeChange: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export type AttributeTypeSettingsControl = TextTypeSettingsFormControl;
+export type AttributeTypeSettingsControl =
+	| TextTypeSettingsFormControl
+	| MediaTypeSettingFormControl;
 export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 	public subtype: TextContentTypes;
 	public maxLength: number;
@@ -106,7 +136,7 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 		React.SetStateAction<number>
 	>;
 	public onSubtypeChangeCallback: React.Dispatch<
-		React.SetStateAction<string>
+		React.SetStateAction<TextContentTypes | MediaContentTypes>
 	>;
 
 	constructor({
@@ -148,7 +178,7 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 	};
 	public onSubtypeChange = (value: string) => {
 		this.subtype = value as TextContentTypes;
-		this.onSubtypeChangeCallback(value);
+		this.onSubtypeChangeCallback(value as TextContentTypes);
 	};
 
 	public setValues = (values: TextTypeSettingFormControlValuesProps) => {
@@ -169,9 +199,106 @@ export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 	};
 }
 
-interface TextTypeSettingControlProps {
+export class MediaTypeSettingFormControl extends TypeSettingsFormControlBase {
+	public subtype: MediaContentTypes;
+	public allowedExtensions: MediaExtensions[];
+	public maxLength: number;
+	public minLength: number;
+	public maxSize: number;
+	public minSize: number;
+
+	public onMaxLengthChangeCallback: React.Dispatch<
+		React.SetStateAction<number>
+	>;
+	public onMinLengthChangeCallback: React.Dispatch<
+		React.SetStateAction<number>
+	>;
+	public onMaxSizeChangeCallback: React.Dispatch<
+		React.SetStateAction<number>
+	>;
+	public onMinSizeChangeCallback: React.Dispatch<
+		React.SetStateAction<number>
+	>;
+	public onSubtypeChangeCallback: React.Dispatch<
+		React.SetStateAction<string>
+	>;
+
+	constructor({
+		values,
+		onChanges,
+		advancedSettingCtrl
+	}: MediaTypeSettingControlProps = {}) {
+		super(
+			{
+				name: values?.name ?? '',
+				advancedSettingValue: advancedSettingCtrl?.value ?? 0
+			},
+			{
+				onNameChange: onChanges?.onNameChange ?? (() => {}),
+				onAdvancedSettingValueChange: () => {}
+			}
+		);
+		this.maxLength = values?.maxLength ?? 0;
+		this.minLength = values?.minLength ?? 0;
+		this.maxSize = values?.maxSize ?? 0;
+		this.minSize = values?.minSize ?? 0;
+		this.subtype =
+			values?.subtype ?? (ImageExtensions.jpg as MediaContentTypes);
+		this.name = values?.name ?? '';
+		this.allowedExtensions = [];
+
+		this.onMaxLengthChangeCallback =
+			onChanges?.onMaxLengthChange ?? (() => {});
+		this.onMinLengthChangeCallback =
+			onChanges?.onMinLengthChange ?? (() => {});
+		this.onMaxSizeChangeCallback = onChanges?.onMaxSizeChange ?? (() => {});
+		this.onMinSizeChangeCallback = onChanges?.onMinSizeChange ?? (() => {});
+		this.onSubtypeChangeCallback = onChanges?.onSubtypeChange ?? (() => {});
+		this.onNameChangeCallback = onChanges?.onNameChange ?? (() => {});
+	}
+
+	public onMaxLengthChange = (value: number) => {
+		this.maxLength = value;
+		this.onMaxLengthChangeCallback(value);
+	};
+
+	public onMinLengthChange = (value: number) => {
+		this.minLength = value;
+		this.onMinLengthChangeCallback(value);
+	};
+	public onSubtypeChange = (value: string) => {
+		this.subtype = value as MediaContentTypes;
+		this.onSubtypeChangeCallback(value);
+	};
+
+	public setValues = (values: MediaTypeSettingFormControlValuesProps) => {
+		this.name = values.name;
+		this.maxLength = values.maxLength;
+		this.minLength = values.minLength;
+		this.subtype =
+			values.subtype ?? (MediaTypes.image as MediaContentTypes);
+
+		this.onNameChangeCallback(values.name);
+		this.onMaxLengthChangeCallback(values.maxLength);
+		this.onMinLengthChangeCallback(values.minLength);
+		this.onSubtypeChangeCallback(values.subtype ?? TextTypes.short_text);
+	};
+
+	public setAdvancedSettingCtrlValue = (value: number) => {
+		this.settingValue = value;
+		this.onSettingValueChangeCallback(value);
+	};
+}
+
+export interface TextTypeSettingControlProps {
 	values?: TextTypeSettingFormControlValuesProps;
 	onChanges?: TextTypeSettingFormControlOnChangesProps;
+	advancedSettingCtrl?: AdvancedSettingFormControlProps;
+}
+
+export interface MediaTypeSettingControlProps {
+	values?: MediaTypeSettingFormControlValuesProps;
+	onChanges?: MediaTypeSettingFormControlOnChangesProps;
 	advancedSettingCtrl?: AdvancedSettingFormControlProps;
 }
 
@@ -182,14 +309,14 @@ interface CollectionFormControllersProps {
 
 export class CollectionFormController {
 	private collectionBaseInfoCtrl: CollectionBaseInfoFormControl;
-	private collectionAttributeSettingFormCtrl: AttributeTypeSettingsControl;
+	private collectionAttributeSettingFormCtrl?: AttributeTypeSettingsControl;
 
 	// Collection from which send to backend
 	private collectionBuilder: CollectionBuilder;
 
 	constructor(
 		collectionBaseInfoController: CollectionBaseInfoFormControl,
-		attributeTypeSettingsController: AttributeTypeSettingsControl
+		attributeTypeSettingsController?: AttributeTypeSettingsControl
 	) {
 		// Collection from which send to backend
 		this.collectionBuilder = new CollectionBuilder();
@@ -258,7 +385,9 @@ export const CreateCollectionStepper = (
 	);
 	const [typeMaxLength, setTypeMaxLength] = React.useState(0);
 	const [typeMinLength, setTypeMinLength] = React.useState(0);
-	const [subtype, setSubtype] = React.useState<string>('short_text');
+	const [subtype, setSubtype] = React.useState<
+		TextContentTypes | MediaContentTypes | ''
+	>('');
 
 	// update the collection context with the new collection
 	const { collections, setCollections } = useContext(CollectionContext);
@@ -279,26 +408,43 @@ export const CreateCollectionStepper = (
 				}
 			})
 	);
-	const [collectionAttributeSettingFormCtrl] = React.useState(
-		props?.attributeTypeSettingsController ??
-			new TextTypeSettingsFormControl({
+
+	const getCollectionAttributeSettingFormCtrl = (
+		type: SupportedAttributeTypes | null,
+		ctrl?: AttributeTypeSettingsControl
+	) => {
+		if (type && ctrl === undefined) {
+			return new TextTypeSettingsFormControl({
 				values: {
 					name: attributeName,
 					maxLength: typeMaxLength,
 					minLength: typeMinLength,
-					subtype: subtype as TextContentTypes
+					subtype: TextTypes.short_text
 				},
 				onChanges: {
 					onNameChange: setAttributeName,
 					onMaxLengthChange: setTypeMaxLength,
 					onMinLengthChange: setTypeMinLength,
-					onSubtypeChange: setSubtype
+					onSubtypeChange: setSubtype as React.Dispatch<
+						React.SetStateAction<
+							TextContentTypes | MediaContentTypes
+						>
+					>
 				},
 				advancedSettingCtrl: {
 					value: advancedSettingValue,
 					onValueChange: setAdvancedSettingValue
 				}
-			})
+			});
+		}
+	};
+
+	// dynamic controllers
+	const [collectionAttributeSettingFormCtrl] = React.useState(
+		getCollectionAttributeSettingFormCtrl(
+			selectedAttributeType,
+			props?.attributeTypeSettingsController
+		)
 	);
 
 	const [ctrl] = React.useState(

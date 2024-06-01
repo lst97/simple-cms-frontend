@@ -8,6 +8,8 @@ import {
 } from '../../../../models/share/collection/CollectionBaseSchema';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
+	MediaContentTypes,
+	MediaTypes,
 	TextContentTypes,
 	TextTypes
 } from '../../../../models/share/collection/BaseSchema';
@@ -27,10 +29,17 @@ import {
 	TextTypeSetting,
 	SupportedAdvancedSettingTypes,
 	SupportedAdvancedSettings,
-	TypeSetting
+	TypeSetting,
+	MediaTypeSetting
 } from '../../../../models/share/collection/AttributeTypeSettings';
 import Validator from '../../../../utils/Validator';
-import { TextTypeSettingsFormControl } from '../CollectionStepper';
+import {
+	AdvancedSettingFormControlProps,
+	MediaTypeSettingControlProps,
+	MediaTypeSettingFormControl,
+	TextTypeSettingControlProps,
+	TextTypeSettingsFormControl
+} from '../CollectionStepper';
 
 interface TabPanelProps {
 	children?: React.ReactNode;
@@ -60,6 +69,69 @@ function a11yProps(index: number) {
 		'aria-controls': `simple-tabpanel-${index}`
 	};
 }
+// included all the props for the form controller, can be safely convert
+interface FormControllerProps {
+	values: {
+		name: string;
+		subtype: TextContentTypes | MediaContentTypes | '';
+		maxLength: number;
+		minLength: number;
+		maxSize: number;
+		minSize: number;
+	};
+	advancedSettingCtrl: AdvancedSettingFormControlProps;
+	onChanges: {
+		onNameChange: (name: string) => void;
+		onSubtypeChange: (
+			subtype: TextContentTypes | MediaContentTypes | ''
+		) => void;
+		onMaxLengthChange: (maxLength: number) => void;
+		onMinLengthChange: (minLength: number) => void;
+		onMaxSizeChange: (maxSize: number) => void;
+		onMinSizeChange: (minSize: number) => void;
+	};
+}
+// determine which controller to use
+const initFormController = (
+	props: FormControllerProps,
+	type?: SupportedAttributeTypes,
+	controller?: TextTypeSettingsFormControl | MediaTypeSettingFormControl
+) => {
+	if (controller === undefined) {
+		switch (type) {
+			case 'text':
+				return new TextTypeSettingsFormControl(
+					props as TextTypeSettingControlProps
+				);
+			case 'media':
+				return new MediaTypeSettingFormControl(
+					props as MediaTypeSettingControlProps
+				);
+			default:
+				return new TextTypeSettingsFormControl(
+					props as TextTypeSettingControlProps
+				);
+		}
+	}
+
+	return controller;
+};
+
+const initSubType = (type?: SupportedAttributeTypes) => {
+	// default to short_text
+	if (type === undefined) {
+		return TextTypes.short_text;
+	}
+
+	switch (type) {
+		case 'text':
+			return TextTypes.short_text;
+		case 'media':
+			return MediaTypes.image;
+		default:
+			return '';
+	}
+};
 
 export const AttributeTypesForm = ({
 	onSubmit,
@@ -69,42 +141,54 @@ export const AttributeTypesForm = ({
 	submitButtonLabel
 }: {
 	onSubmit: (settings: TypeSetting, attributeId?: string) => void;
-	controller?: TextTypeSettingsFormControl;
+	controller?: TextTypeSettingsFormControl | MediaTypeSettingFormControl;
 	attributeId?: string;
 	type?: SupportedAttributeTypes;
 	submitButtonLabel?: string;
 }) => {
 	// default values hook
 	const [name, setName] = React.useState(controller?.name ?? '');
-	const [subtype, setSubtype] = React.useState(
-		type === 'text' ? TextTypes.short_text : ''
-	);
+	const [subtype, setSubtype] = React.useState<
+		TextContentTypes | MediaContentTypes | ''
+	>(initSubType(type));
 	const [advancedSettingFlag, setAdvancedSettingFlag] = React.useState(
 		controller?.settingValue ?? 0
 	);
 	const [maxLength, setMaxLength] = React.useState(0);
 	const [minLength, setMinLength] = React.useState(0);
 
-	const [ctrl] = React.useState<TextTypeSettingsFormControl>(
-		controller ??
-			new TextTypeSettingsFormControl({
+	const [maxSize, setMaxSize] = React.useState(0);
+	const [minSize, setMinSize] = React.useState(0);
+
+	const [ctrl] = React.useState<
+		TextTypeSettingsFormControl | MediaTypeSettingFormControl
+	>(
+		initFormController(
+			{
 				values: {
-					name: name,
-					subtype: subtype as TextContentTypes,
-					maxLength: maxLength,
-					minLength: minLength
-				},
-				onChanges: {
-					onNameChange: setName,
-					onMaxLengthChange: setMaxLength,
-					onMinLengthChange: setMinLength,
-					onSubtypeChange: setSubtype
+					name,
+					subtype,
+					maxLength,
+					minLength,
+					maxSize,
+					minSize
 				},
 				advancedSettingCtrl: {
 					value: advancedSettingFlag,
 					onValueChange: setAdvancedSettingFlag
+				},
+				onChanges: {
+					onNameChange: setName,
+					onSubtypeChange: setSubtype,
+					onMaxLengthChange: setMaxLength,
+					onMinLengthChange: setMinLength,
+					onMaxSizeChange: setMaxSize,
+					onMinSizeChange: setMinSize
 				}
-			})
+			},
+			type,
+			controller
+		)
 	);
 
 	const [submitButtonEnable, setSubmitButtonEnable] = React.useState(false);
@@ -120,9 +204,10 @@ export const AttributeTypesForm = ({
 	React.useEffect(() => {
 		switch (type) {
 			case SupportedAttributes.text:
-				setSetting(new TextTypeSetting());
+				setSetting(new TextTypeSetting('short_text'));
 				break;
-			case 'number':
+			case SupportedAttributes.media:
+				setSetting(new MediaTypeSetting('image'));
 				break;
 		}
 	}, [type]);
@@ -132,10 +217,22 @@ export const AttributeTypesForm = ({
 			if (setting instanceof TextTypeSetting) {
 				setting.isRequire = !!(advancedSettingFlag & 1);
 				setting.isUnique = !!(advancedSettingFlag & 2);
-				setting.setTextType(ctrl.subtype);
+				setting.textSubType = subtype as TextContentTypes;
 				setting.name = name;
 
 				ctrl.onNameChange(name);
+				ctrl.onSubtypeChange(subtype as TextContentTypes);
+				ctrl.onSettingValueChange(advancedSettingFlag);
+			}
+
+			if (setting instanceof MediaTypeSetting) {
+				setting.isRequire = !!(advancedSettingFlag & 1);
+				setting.isUnique = !!(advancedSettingFlag & 2);
+				setting.mediaSubType = subtype as MediaContentTypes;
+				setting.name = name;
+
+				ctrl.onNameChange(name);
+				ctrl.onSubtypeChange(subtype as MediaContentTypes);
 				ctrl.onSettingValueChange(advancedSettingFlag);
 			}
 			onSubmit(setting as TypeSetting, attributeId);
@@ -149,9 +246,10 @@ export const AttributeTypesForm = ({
 			case TextTypes.short_text:
 			case TextTypes.long_text:
 			case TextTypes.reach_text:
+			case MediaTypes.image:
+			case MediaTypes.audio:
+			case MediaTypes.video:
 				ctrl.onSubtypeChange(value);
-				break;
-			case 'media':
 				break;
 			case 'code':
 				break;
@@ -192,95 +290,130 @@ export const AttributeTypesForm = ({
 				break;
 		}
 	};
-
-	const getSubTypeOptions = (type: SupportedAttributeTypes) => {
+	const textSubTypeOptions = () => {
 		return (
-			<>
-				<Typography variant="h6">Type</Typography>
-
-				{type === 'text' && (
-					<RadioGroup
-						row
-						aria-labelledby="text-type-radio-buttons-group-label"
-						onChange={handleSubTypeChange}
-						value={ctrl.subtype}
-						name="text-type-radio-buttons-group"
-					>
-						<FormControlLabel
-							value={TextTypes.short_text}
-							control={<Radio />}
-							label={
-								<React.Fragment>
-									<Typography variant="body1">
-										Short Text
-									</Typography>
-									<Typography variant="caption">
-										Best for titles, names, and links(URL).
-									</Typography>
-								</React.Fragment>
-							}
-						/>
-						<FormControlLabel
-							value={TextTypes.long_text}
-							control={<Radio />}
-							label={
-								<React.Fragment>
-									<Typography variant="body1">
-										Long Text
-									</Typography>
-									<Typography variant="caption">
-										Best for descriptions, biography.
-									</Typography>
-								</React.Fragment>
-							}
-						/>
-						<FormControlLabel
-							value={TextTypes.reach_text}
-							control={<Radio />}
-							label={
-								<React.Fragment>
-									<Typography variant="body1">
-										Reach Text
-									</Typography>
-									<Typography variant="caption">
-										Best for blog posts, articles, and
-										notes.
-									</Typography>
-								</React.Fragment>
-							}
-						/>
-					</RadioGroup>
-				)}
-			</>
+			<RadioGroup
+				row
+				aria-labelledby="text-type-radio-buttons-group-label"
+				onChange={handleSubTypeChange}
+				value={ctrl.subtype}
+				name="text-type-radio-buttons-group"
+			>
+				<FormControlLabel
+					value={TextTypes.short_text}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Short Text</Typography>
+							<Typography variant="caption">
+								Best for titles, names, and links(URL).
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+				<FormControlLabel
+					value={TextTypes.long_text}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Long Text</Typography>
+							<Typography variant="caption">
+								Best for descriptions, biography.
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+				<FormControlLabel
+					value={TextTypes.reach_text}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Reach Text</Typography>
+							<Typography variant="caption">
+								Best for blog posts, articles, and notes.
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+			</RadioGroup>
 		);
 	};
 
-	const BaseSettings = () => {
+	const mediaSubTypeOptions = () => {
+		return (
+			<RadioGroup
+				row
+				aria-labelledby="media-type-radio-buttons-group-label"
+				onChange={handleSubTypeChange}
+				value={ctrl.subtype}
+				name="media-type-radio-buttons-group"
+			>
+				<FormControlLabel
+					value={MediaTypes.image}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Image</Typography>
+							<Typography variant="caption">
+								jpg, png, gif, svg.
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+				<FormControlLabel
+					value={MediaTypes.audio}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Audio</Typography>
+							<Typography variant="caption">
+								mp3, wav, ogg.
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+				<FormControlLabel
+					value={MediaTypes.video}
+					control={<Radio />}
+					label={
+						<React.Fragment>
+							<Typography variant="body1">Video</Typography>
+							<Typography variant="caption">
+								mp4, webm, ogg
+							</Typography>
+						</React.Fragment>
+					}
+				/>
+			</RadioGroup>
+		);
+	};
+	const getSubTypeOptions = (type: SupportedAttributeTypes) => {
 		switch (type) {
 			case SupportedAttributes.text:
-				return (
-					<Box>
-						<FormControl>
-							<TextField
-								id="type-name-input"
-								label="Name"
-								required={true}
-								helperText="No spaces allowed"
-								value={name}
-								variant="outlined"
-								onChange={handleTypeNameChange}
-							/>
-							{/* TODO: Fix a bug that it lose focus when input */}
-							{getSubTypeOptions(type)}
-						</FormControl>
-					</Box>
-				);
-			case 'number':
-				return (
-					<Box>
-						<FormControl></FormControl>
-					</Box>
-				);
+				return textSubTypeOptions();
+			case SupportedAttributes.media:
+				return mediaSubTypeOptions();
+		}
+	};
+
+	const BaseSettings = () => {
+		if (type) {
+			return (
+				<Box>
+					<FormControl>
+						<TextField
+							id="type-name-input"
+							label="Name"
+							required={true}
+							helperText="No spaces allowed"
+							value={name}
+							variant="outlined"
+							onChange={handleTypeNameChange}
+						/>
+						{getSubTypeOptions(type)}
+					</FormControl>
+				</Box>
+			);
 		}
 	};
 
@@ -297,6 +430,7 @@ export const AttributeTypesForm = ({
 	}) => {
 		switch (type) {
 			case SupportedAttributes.text:
+			case SupportedAttributes.media:
 				return (
 					<Box>
 						<FormGroup>
@@ -407,12 +541,6 @@ export const AttributeTypesForm = ({
 								)}
 							</Grid>
 						</FormGroup>
-					</Box>
-				);
-			case 'number':
-				return (
-					<Box>
-						<FormControl></FormControl>
 					</Box>
 				);
 		}

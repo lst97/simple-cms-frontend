@@ -47,6 +47,7 @@ export const AttributesController = ({
 							key={'subtypes_' + index}
 							selectedCollectionIndex={selectedCollectionIndex}
 							selectedAttributeIndex={index}
+							slug={collections[selectedCollectionIndex].slug}
 							attribute={attribute}
 						/>
 					)

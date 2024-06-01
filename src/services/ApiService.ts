@@ -191,6 +191,32 @@ export class CollectionApiService extends ApiResultIndicator {
 			return [];
 		}
 	}
+
+	static async notifyAttributeFilesUploadFinished(
+		slug: string,
+		attributeId: string,
+		sessionId: string,
+		status: boolean,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().post(
+				formatRoutes(ApiConfig.instance.routes.addCollectionAttribute, {
+					slug: slug,
+					id: attributeId
+				}),
+				{ sessionId: sessionId, status: status }
+			);
+
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
 }
 
 export class AuthApiService extends ApiResultIndicator {
@@ -217,7 +243,7 @@ export class AuthApiService extends ApiResultIndicator {
 	) {
 		try {
 			const response = await ApiServiceInstance().post(
-				ApiConfig.instance.routes.register.toString(),
+				ApiConfig.instance.routes.register,
 				form
 			);
 			return response.data;
@@ -227,6 +253,28 @@ export class AuthApiService extends ApiResultIndicator {
 				errorHandler.handleError(error);
 			}
 			return null;
+		}
+	}
+}
+
+export class EndpointApiService {
+	static async getEndpointBySlug(
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().get(
+				formatRoutes(ApiConfig.instance.routes.fetchEndpointBySlug, {
+					slug: slug
+				})
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
 		}
 	}
 }

@@ -5,6 +5,7 @@ import { useContext, useState } from 'react';
 import { CreateCollectionDialog } from './CollectionComponents';
 import {
 	AttributeSettingTypes,
+	MediaTypeSetting,
 	TextTypeSetting
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
@@ -75,6 +76,14 @@ export class CollectionBuilder implements ICollectionBuilder {
 				this.form.attributes?.push(
 					new CollectionAttribute(
 						setting as TextTypeSetting,
+						new BaseContent()
+					)
+				);
+				break;
+			case MediaTypeSetting:
+				this.form.attributes?.push(
+					new CollectionAttribute(
+						setting as MediaTypeSetting,
 						new BaseContent()
 					)
 				);

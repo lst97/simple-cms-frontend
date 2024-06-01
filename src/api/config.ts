@@ -11,6 +11,7 @@ interface RoutesUrls {
 	deleteCollection: string;
 	login: string;
 	register: string;
+	fetchEndpointBySlug: string;
 }
 /**
  * Represents the configuration for the API.
@@ -62,7 +63,8 @@ export class ApiConfig {
 			deleteCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}`,
 			deleteCollection: `${baseUrl}/collections/{slug}`,
 			login: `${baseUrl}/auth/login`,
-			register: `${baseUrl}/auth/register`
+			register: `${baseUrl}/auth/register`,
+			fetchEndpointBySlug: `${baseUrl}/endpoints/{slug}`
 		};
 	}
 }

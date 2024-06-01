@@ -2,6 +2,7 @@ import {
 	Box,
 	Button,
 	IconButton,
+	Link,
 	Menu,
 	MenuItem,
 	Stack,
@@ -13,6 +14,7 @@ import {
 } from '../../../models/share/collection/CollectionAttributes';
 import {
 	AttributeSettingTypes,
+	MediaTypeSettingDbModel,
 	TextTypeSetting,
 	TextTypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
@@ -25,13 +27,18 @@ import {
 	SupportedAttributes
 } from '../../../models/share/collection/CollectionBaseSchema';
 import { ConfirmationDialog, PlainDialog } from '../../common/dialogs/Dialogs';
-import { CollectionApiService } from '../../../services/ApiService';
+import {
+	CollectionApiService,
+	EndpointApiService
+} from '../../../services/ApiService';
 import { BaseContent } from '../../../models/share/collection/AttributeContents';
 import AttributeTypesGrid from './AttributeTypesGrid';
 import { AttributeTypesForm } from './forms/AttributeTypesForm';
 
 import SettingsIcon from '@mui/icons-material/Settings';
+import { ICollectionEndpoint } from '../../../models/share/endpoint/Endpoint';
 
+import { Config as ApiServiceConfig } from '@lst97/common-restful';
 const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const [selectedAttribute, setSelectedAttribute] =
 		useState<CollectionAttributeDbModel | null>(null);
@@ -55,7 +62,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 		if (pendingAddAttributeType === SupportedAttributes.text) {
 			const newAttribute = new CollectionAttribute(
-				new TextTypeSetting(),
+				new TextTypeSetting('short_text'),
 				new BaseContent()
 			);
 
@@ -129,6 +136,19 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 		setPendingAddAttributeType(attributeType);
 	};
 
+	const getSubTypeName = (attribute: CollectionAttributeDbModel) => {
+		switch (attribute.setting.type) {
+			case SupportedAttributes.text:
+				return (attribute.setting as TextTypeSettingDbModel)
+					.textSubType;
+			case SupportedAttributes.media:
+				return (attribute.setting as MediaTypeSettingDbModel)
+					.mediaSubType;
+			default:
+				return null;
+		}
+	};
+
 	return (
 		<div className="flex flex-col gap-2 m-8 rounded-md bg-white shadow-sm">
 			<div className="flex flex-row justify-between">
@@ -156,13 +176,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 									</Typography>
 									<Typography variant="subtitle1">
 										Type: {attribute.setting.type},
-										Sub-Type:{' '}
-										{attribute.setting.type ===
-										SupportedAttributes.text
-											? (
-													attribute.setting as TextTypeSettingDbModel
-											  ).textType
-											: null}
+										Sub-Type: {getSubTypeName(attribute)}
 									</Typography>
 								</div>
 								<div>
@@ -266,7 +280,9 @@ const CollectionViewer = ({
 }) => {
 	const { collections } = useContext(CollectionContext);
 
-	const [collection, setCollection] = useState<CollectionDbModel | null>();
+	const [collection, setCollection] = useState<CollectionDbModel | null>(
+		null
+	);
 
 	const [pendingDeleteCollection, setPendingDeleteCollection] =
 		useState<CollectionDbModel | null>(null);
@@ -274,14 +290,26 @@ const CollectionViewer = ({
 	const [selectedEditCollection, setSelectedEditCollection] =
 		useState<CollectionDbModel | null>(null);
 
-	const [isEditCollectionDialogOpen, setIsEditCollectionDialogOpen] =
-		useState(false);
+	const [subdirectory, setSubdirectory] = useState<string>('Loading');
 
 	useEffect(() => {
-		const selectedCollection = collections.find(
-			(collection) => collection.slug === slug
-		);
-		if (selectedCollection) setCollection(selectedCollection);
+		setSubdirectory('Loading...');
+		const fetchEndpointData = async () => {
+			const selectedCollection = collections.find(
+				(collection) => collection.slug === slug
+			);
+			if (selectedCollection) {
+				setCollection(selectedCollection);
+				// get the subdirectory
+				const endpoint = (await EndpointApiService.getEndpointBySlug(
+					selectedCollection.slug
+				)) as ICollectionEndpoint;
+
+				setSubdirectory(endpoint.prefix);
+			}
+		};
+
+		fetchEndpointData();
 	}, [collections, slug]);
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -322,6 +350,17 @@ const CollectionViewer = ({
 							<Typography variant="subtitle1">
 								{collection.description}
 							</Typography>
+							<Link
+								href={
+									subdirectory === 'Loading...'
+										? undefined
+										: `${
+												ApiServiceConfig.instance()
+													.baseUrl
+										  }/collections/${collection.slug}`
+								}
+								variant="subtitle2"
+							>{`${subdirectory}`}</Link>
 						</div>
 						<div>
 							<IconButton

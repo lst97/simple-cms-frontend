@@ -97,6 +97,41 @@ const CollectionBaseInfoForm = ({
 		}
 	};
 
+	const handleSubdirectoryChange = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const value = event.target.value.trim();
+
+		if (value === '') {
+			setPendingSubdirectory(value);
+			return;
+		}
+
+		if (
+			RegExp(SubdirectoryRegex.collectionSubdirectoryRegex).test(
+				value
+			) === false ||
+			value.startsWith('/')
+		) {
+			return;
+		}
+
+		if (value.endsWith('/')) {
+			setValues({
+				...values,
+				subdirectory: values.subdirectory + value
+			});
+			setPendingSubdirectory('');
+			controller?.onChanges.onSubdirectoryChange(
+				values.subdirectory + value
+			);
+
+			return;
+		}
+
+		setPendingSubdirectory(value);
+	};
+
 	return (
 		<Grid container spacing={2}>
 			<Grid xs={6}>
@@ -107,8 +142,34 @@ const CollectionBaseInfoForm = ({
 					required={true}
 					variant="outlined"
 					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-						setValues({ ...values, name: event.target.value });
-						controller?.onChanges.onNameChange(event.target.value);
+						const value = event.target.value.toLocaleLowerCase();
+
+						if (value === '') {
+							setValues({
+								...values,
+								name: event.target.value
+							});
+							controller?.onChanges.onNameChange(
+								event.target.value
+							);
+							return;
+						}
+
+						if (
+							RegExp(SubdirectoryRegex.collectionNameRegex).test(
+								value
+							) === false
+						) {
+							return;
+						}
+
+						setValues({
+							...values,
+							name: event.target.value.trim().toLowerCase()
+						});
+						controller?.onChanges.onNameChange(
+							event.target.value.trim().toLowerCase()
+						);
 					}}
 					value={values.name}
 				/>
@@ -144,7 +205,9 @@ const CollectionBaseInfoForm = ({
 						<Tooltip
 							title={`${
 								ApiServiceConfig.instance().baseUrl
-							}/collections/${values.subdirectory.slice(0, -1)}`}
+							}/collections/${
+								values.subdirectory
+							}${values.name.toLocaleLowerCase()}_[id]`}
 						>
 							<Typography
 								sx={{
@@ -157,44 +220,12 @@ const CollectionBaseInfoForm = ({
 								}}
 							>{`${
 								ApiServiceConfig.instance().baseUrl
-							}/collections/${values.subdirectory.slice(
-								0,
-								-1
-							)}`}</Typography>
+							}/collections/${
+								values.subdirectory
+							}${values.name.toLocaleLowerCase()}_[id]`}</Typography>
 						</Tooltip>
 					}
-					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-						const value = event.target.value.trim();
-
-						if (value === '') {
-							setPendingSubdirectory(value);
-							return;
-						}
-
-						if (
-							RegExp(
-								SubdirectoryRegex.collectionSubdirectoryRegex
-							).test(value) === false ||
-							value.startsWith('/')
-						) {
-							return;
-						}
-
-						if (value.endsWith('/')) {
-							setValues({
-								...values,
-								subdirectory: values.subdirectory + value
-							});
-							setPendingSubdirectory('');
-							controller?.onChanges.onSubdirectoryChange(
-								values.subdirectory + value
-							);
-
-							return;
-						}
-
-						setPendingSubdirectory(value);
-					}}
+					onChange={handleSubdirectoryChange}
 					value={pendingSubdirectory}
 					onKeyDown={handleKeyDown}
 				/>

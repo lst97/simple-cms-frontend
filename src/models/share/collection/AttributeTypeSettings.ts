@@ -1,17 +1,19 @@
 import {
 	TextSchema,
 	CodeSchema,
-	MediaTypes,
 	MediaExtensions,
 	DocumentExtensions,
 	DocumentSchema,
 	DateFormats,
 	NumberSchema,
 	DecimalSchema,
-	MediaSchema,
 	DateSchema,
 	TextContentTypes,
-	CodeLanguageTypes
+	CodeLanguageTypes,
+	MediaContentTypes,
+	ImageSchema,
+	AudioSchema,
+	VideoSchema
 } from './BaseSchema';
 import { SupportedAttributeTypes } from './CollectionBaseSchema';
 
@@ -48,13 +50,21 @@ export interface TypeSettingDbModel {
 export interface TextTypeSettingDbModel extends TypeSettingDbModel {
 	maxLength: number;
 	minLength: number;
-	textType: TextContentTypes;
+	textSubType: TextContentTypes;
+}
+
+export interface MediaTypeSettingDbModel extends TypeSettingDbModel {
+	maxLength: number;
+	minLength: number;
+	maxSize: number;
+	minSize: number;
+	mediaSubType: MediaContentTypes;
 }
 
 export type AttributeSettingTypes =
 	| TypeSetting
 	| TextTypeSetting
-	| CodeTypeSetting
+	// | CodeTypeSetting
 	| MediaTypeSetting
 	| DocumentTypeSetting
 	| DateTypeSetting
@@ -71,23 +81,15 @@ export class TypeSetting {
 }
 
 export class TextTypeSetting extends TypeSetting {
-	public maxLength: number = 0;
-	public minLength: number = 0;
-	private textType: TextContentTypes = 'short_text';
+	public textSubType: TextContentTypes;
+	public maxLength: number;
+	public minLength: number;
 
-	constructor() {
+	constructor(value: TextContentTypes) {
 		super();
-		this.type = TextSchema.type;
-		this.maxLength = TextSchema.maxLength;
-		this.minLength = TextSchema.minLength;
-		this.textType = TextSchema.textType;
-	}
-
-	public getTextType(): TextContentTypes {
-		return this.textType;
-	}
-
-	public setTextType(value: TextContentTypes) {
+		this.type = 'text';
+		this.minLength = 0;
+		this.textSubType = value;
 		switch (value) {
 			case 'short_text':
 				this.maxLength = 255;
@@ -97,50 +99,55 @@ export class TextTypeSetting extends TypeSetting {
 				this.maxLength = 65535;
 				break;
 		}
-
-		this.textType = value;
 	}
 }
 
-export class CodeTypeSetting extends TextTypeSetting {
-	private _language: CodeLanguageTypes;
+// export class CodeTypeSetting extends TextTypeSetting {
+// 	private _language: CodeLanguageTypes;
 
-	constructor() {
-		super();
-		this.type = CodeSchema.type;
-		this._language = CodeSchema.language;
-		this.maxLength = CodeSchema.maxLength;
-		this.minLength = CodeSchema.minLength;
-	}
+// 	constructor() {
+// 		super();
+// 		this.type = CodeSchema.type;
+// 		this._language = CodeSchema.language;
+// 		this.maxLength = CodeSchema.maxLength;
+// 		this.minLength = CodeSchema.minLength;
+// 	}
 
-	public set language(value: CodeLanguageTypes) {
-		this._language = value;
-	}
-}
+// 	public set language(value: CodeLanguageTypes) {
+// 		this._language = value;
+// 	}
+// }
 
 export class MediaTypeSetting extends TypeSetting {
-	private _mediaType: MediaTypes;
-	private _mediaExtension: MediaExtensions;
-	private _maxSize: number;
+	// allowed extension
+	public mediaSubType;
+	public mediaExtension: MediaExtensions | ''; // set when upload file
+	public maxSize!: number;
+	public minSize: number;
+	public maxLength!: number;
+	public minLength: number;
 
-	constructor() {
+	constructor(value: MediaContentTypes) {
 		super();
-		this.type = MediaSchema.type;
-		this._mediaExtension = MediaSchema.extension;
-		this._mediaType = MediaSchema.mediaType;
-		this._maxSize = MediaSchema.maxSize;
-	}
+		this.type = 'media';
+		this.mediaExtension = '';
+		this.minSize = 0;
+		this.minLength = 0;
+		this.mediaSubType = value;
 
-	public set mediaType(value: MediaTypes) {
-		this._mediaType = value;
-	}
-
-	public set mediaExtension(value: MediaExtensions) {
-		this._mediaExtension = value;
-	}
-
-	public set maxSize(value: number) {
-		this._maxSize = value;
+		switch (value) {
+			case 'image':
+				this.maxSize = ImageSchema.maxSize; // 4 MB
+				break;
+			case 'audio':
+				this.maxSize = AudioSchema.maxSize; // 32 MB
+				this.maxLength = AudioSchema.maxLength;
+				break;
+			case 'video':
+				this.maxSize = VideoSchema.maxSize; // 512 MB
+				this.maxLength = VideoSchema.maxLength;
+				break;
+		}
 	}
 }
 
