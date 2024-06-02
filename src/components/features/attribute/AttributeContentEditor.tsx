@@ -5,7 +5,12 @@ import {
 	MediaTypeSettingDbModel,
 	TextTypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
-import { Typography } from '@mui/material';
+import {
+	ImageList,
+	ImageListItem,
+	ImageListItemBar,
+	Typography
+} from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
 import { CollectionContext } from '../../../context/CollectionContext';
 
@@ -28,7 +33,11 @@ registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
 
 import { v4 as uuidv4 } from 'uuid';
-import { CollectionApiService } from '../../../services/ApiService';
+import {
+	IMediaContent,
+	IParallelFilesUploadContent
+} from '../../../models/share/collection/AttributeContents';
+import { ImageViewer } from '../../common/medias/ImageViewer';
 
 const PlainTextEditor = (props: {
 	value: string;
@@ -53,6 +62,78 @@ const ReachTextEditor = (props: {
 	const { value, onChange } = props;
 
 	return <ReactQuill value={value} onChange={onChange} />;
+};
+
+export const GalleryEditor = (props: {
+	slug: string;
+	attribute: CollectionAttributeDbModel;
+	value?: IMediaContent[];
+	onChange?: (value: IMediaContent[]) => void;
+}) => {
+	const [selectedItem, setSelectedItem] = useState<IMediaContent | null>(
+		null
+	);
+
+	const onClose = () => {
+		setSelectedItem(null);
+	};
+
+	const baseUrl = ApiServiceConfig.instance().baseUrl;
+
+	const fetchExistingImages = () => {
+		const items =
+			props.value ?? (props.attribute.content.value as IMediaContent[]);
+
+		if (!props.value) {
+			props.onChange?.(items);
+		}
+
+		return items.map((item) => (
+			<ImageListItem key={item.url.split('/')[-1]}>
+				<img
+					crossOrigin="anonymous"
+					srcSet={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format&dpr=2 2x`}
+					src={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format`}
+					alt={item.fileName}
+					loading="lazy"
+					onClick={() => {
+						setSelectedItem(item);
+					}}
+					style={{
+						cursor: 'pointer',
+						width: '100%',
+						height: '100%',
+						objectFit: 'cover'
+					}}
+				/>
+				<ImageListItemBar title={item.fileName} />
+			</ImageListItem>
+		));
+	};
+	return (
+		<>
+			<ImageList variant="masonry" cols={3} gap={8}>
+				{fetchExistingImages()}
+			</ImageList>
+			<ImageViewer
+				baseUrl={baseUrl}
+				items={
+					props.value ??
+					(props.attribute.content.value as IMediaContent[])
+				}
+				selectedIndex={(
+					props.value ??
+					(props.attribute.content.value as IMediaContent[])
+				).findIndex(
+					(item) =>
+						item.url.split('/')[-1] ===
+						selectedItem?.url.split('/')[-1]
+				)}
+				onClose={onClose}
+			/>
+			<FilesUploader slug={props.slug} attribute={props.attribute} />
+		</>
+	);
 };
 
 // Database model for FilePond
@@ -190,7 +271,7 @@ const AttributeContentEditor = ({
 	};
 
 	const mediaTypeComponents = {
-		image: FilesUploader,
+		image: GalleryEditor,
 		audio: FilesUploader,
 		video: FilesUploader
 	};
@@ -209,7 +290,7 @@ const AttributeContentEditor = ({
 						{attribute.setting.name}
 					</Typography>
 					<EditorComponent
-						value={attribute.content.value ?? ''}
+						value={(attribute.content.value as string) ?? ''}
 						onChange={(value) => {
 							setCollections((prevCollections) => {
 								const updatedCollections = [...prevCollections];
@@ -237,13 +318,7 @@ const AttributeContentEditor = ({
 					<Typography variant="h6" sx={{ p: 1 }}>
 						{attribute.setting.name}
 					</Typography>
-					<EditorComponent
-						slug={slug}
-						attribute={attribute}
-						onChange={(value) => {
-							console.log(value);
-						}}
-					/>
+					<EditorComponent slug={slug} attribute={attribute} />
 				</>
 			);
 		}

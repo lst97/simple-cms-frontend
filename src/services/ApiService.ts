@@ -14,8 +14,7 @@ import {
 	CollectionAttributeDbModel
 } from '../models/share/collection/CollectionAttributes';
 import { AttributeSettingTypes } from '../models/share/collection/AttributeTypeSettings';
-import { BaseContent } from '../models/share/collection/AttributeContents';
-// import { ApiConfig } from "../api/config";
+import { IBaseContent } from '../models/share/collection/AttributeContents';
 
 const defaultApiErrorHandler = new ConsoleLogApiErrorHandler();
 export class CollectionApiService extends ApiResultIndicator {
@@ -54,13 +53,33 @@ export class CollectionApiService extends ApiResultIndicator {
 		}
 	}
 
+	static async getCollection(
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().get(
+				formatRoutes(ApiConfig.instance.routes.fetchCollection, {
+					slug: slug
+				})
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
+
 	static async updateCollectionAttribute(
 		slug: string,
 		attributeId: string,
 		{
 			setting,
 			content
-		}: { setting?: AttributeSettingTypes; content?: BaseContent },
+		}: { setting?: AttributeSettingTypes; content?: IBaseContent },
 		...errorHandlers: IApiErrorHandler[]
 	) {
 		try {
@@ -180,32 +199,6 @@ export class CollectionApiService extends ApiResultIndicator {
 					{ slug: slug }
 				),
 				attributes
-			);
-
-			return response.data;
-		} catch (error) {
-			defaultApiErrorHandler.handleError(error);
-			for (const errorHandler of errorHandlers) {
-				errorHandler.handleError(error);
-			}
-			return [];
-		}
-	}
-
-	static async notifyAttributeFilesUploadFinished(
-		slug: string,
-		attributeId: string,
-		sessionId: string,
-		status: boolean,
-		...errorHandlers: IApiErrorHandler[]
-	) {
-		try {
-			const response = await ApiServiceInstance().post(
-				formatRoutes(ApiConfig.instance.routes.addCollectionAttribute, {
-					slug: slug,
-					id: attributeId
-				}),
-				{ sessionId: sessionId, status: status }
 			);
 
 			return response.data;

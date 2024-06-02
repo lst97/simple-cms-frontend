@@ -4,6 +4,7 @@ import axios from 'axios';
 interface RoutesUrls {
 	createCollection: string;
 	fetchCollections: string;
+	fetchCollection: string;
 	updateCollectionAttributes: string;
 	updateCollectionAttribute: string;
 	deleteCollectionAttribute: string;
@@ -57,6 +58,7 @@ export class ApiConfig {
 		this._routes = {
 			createCollection: `${baseUrl}/collections`,
 			fetchCollections: `${baseUrl}/collections`,
+			fetchCollection: `${baseUrl}/collections/{slug}`,
 			updateCollectionAttributes: `${baseUrl}/collections/{slug}/attributes`,
 			updateCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}?setting={setting}&content={content}`,
 			addCollectionAttribute: `${baseUrl}/collections/{slug}/attribute`,
