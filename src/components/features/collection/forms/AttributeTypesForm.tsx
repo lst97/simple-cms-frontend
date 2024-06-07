@@ -30,13 +30,18 @@ import {
 	SupportedAdvancedSettingTypes,
 	SupportedAdvancedSettings,
 	TypeSetting,
-	MediaTypeSetting
+	MediaTypeSetting,
+	PostTypeSetting,
+	PostsTypeSetting
 } from '../../../../models/share/collection/AttributeTypeSettings';
 import Validator from '../../../../utils/Validator';
 import {
 	AdvancedSettingFormControlProps,
 	MediaTypeSettingControlProps,
 	MediaTypeSettingFormControl,
+	PostTypeSettingControlProps,
+	PostTypeSettingsFormControl,
+	PostsTypeSettingsFormControl,
 	TextTypeSettingControlProps,
 	TextTypeSettingsFormControl
 } from '../CollectionStepper';
@@ -78,6 +83,8 @@ interface FormControllerProps {
 		minLength: number;
 		maxSize: number;
 		minSize: number;
+		comment: boolean;
+		reaction: boolean;
 	};
 	advancedSettingCtrl: AdvancedSettingFormControlProps;
 	onChanges: {
@@ -89,13 +96,19 @@ interface FormControllerProps {
 		onMinLengthChange: (minLength: number) => void;
 		onMaxSizeChange: (maxSize: number) => void;
 		onMinSizeChange: (minSize: number) => void;
+		onCommentChange: (comment: boolean) => void;
+		onReactionChange: (reaction: boolean) => void;
 	};
 }
 // determine which controller to use
 const initFormController = (
 	props: FormControllerProps,
 	type?: SupportedAttributeTypes,
-	controller?: TextTypeSettingsFormControl | MediaTypeSettingFormControl
+	controller?:
+		| TextTypeSettingsFormControl
+		| MediaTypeSettingFormControl
+		| PostTypeSettingsFormControl
+		| PostsTypeSettingsFormControl
 ) => {
 	if (controller === undefined) {
 		switch (type) {
@@ -106,6 +119,10 @@ const initFormController = (
 			case 'media':
 				return new MediaTypeSettingFormControl(
 					props as MediaTypeSettingControlProps
+				);
+			case 'post':
+				return new PostTypeSettingsFormControl(
+					props as PostTypeSettingControlProps
 				);
 			default:
 				return new TextTypeSettingsFormControl(
@@ -118,11 +135,6 @@ const initFormController = (
 };
 
 const initSubType = (type?: SupportedAttributeTypes) => {
-	// default to short_text
-	if (type === undefined) {
-		return TextTypes.short_text;
-	}
-
 	switch (type) {
 		case 'text':
 			return TextTypes.short_text;
@@ -140,8 +152,12 @@ export const AttributeTypesForm = ({
 	attributeId,
 	submitButtonLabel
 }: {
-	onSubmit: (settings: TypeSetting, attributeId?: string) => void;
-	controller?: TextTypeSettingsFormControl | MediaTypeSettingFormControl;
+	onSubmit?: (settings: TypeSetting, attributeId?: string) => void;
+	controller?:
+		| TextTypeSettingsFormControl
+		| MediaTypeSettingFormControl
+		| PostTypeSettingsFormControl
+		| PostsTypeSettingsFormControl;
 	attributeId?: string;
 	type?: SupportedAttributeTypes;
 	submitButtonLabel?: string;
@@ -160,8 +176,14 @@ export const AttributeTypesForm = ({
 	const [maxSize, setMaxSize] = React.useState(0);
 	const [minSize, setMinSize] = React.useState(0);
 
+	const [comment, setComment] = React.useState(true);
+	const [reaction, setReaction] = React.useState(true);
+
 	const [ctrl] = React.useState<
-		TextTypeSettingsFormControl | MediaTypeSettingFormControl
+		| TextTypeSettingsFormControl
+		| MediaTypeSettingFormControl
+		| PostTypeSettingsFormControl
+		| PostsTypeSettingsFormControl
 	>(
 		initFormController(
 			{
@@ -171,7 +193,9 @@ export const AttributeTypesForm = ({
 					maxLength,
 					minLength,
 					maxSize,
-					minSize
+					minSize,
+					comment,
+					reaction
 				},
 				advancedSettingCtrl: {
 					value: advancedSettingFlag,
@@ -183,7 +207,9 @@ export const AttributeTypesForm = ({
 					onMaxLengthChange: setMaxLength,
 					onMinLengthChange: setMinLength,
 					onMaxSizeChange: setMaxSize,
-					onMinSizeChange: setMinSize
+					onMinSizeChange: setMinSize,
+					onCommentChange: setComment,
+					onReactionChange: setReaction
 				}
 			},
 			type,
@@ -209,6 +235,12 @@ export const AttributeTypesForm = ({
 			case SupportedAttributes.media:
 				setSetting(new MediaTypeSetting('image'));
 				break;
+			case SupportedAttributes.post:
+				setSetting(new PostTypeSetting());
+				break;
+			case SupportedAttributes.posts:
+				setSetting(new PostsTypeSetting());
+				break;
 		}
 	}, [type]);
 
@@ -221,7 +253,9 @@ export const AttributeTypesForm = ({
 				setting.name = name;
 
 				ctrl.onNameChange(name);
-				ctrl.onSubtypeChange(subtype as TextContentTypes);
+				(ctrl as TextTypeSettingsFormControl).onSubtypeChange(
+					subtype as TextContentTypes
+				);
 				ctrl.onSettingValueChange(advancedSettingFlag);
 			}
 
@@ -232,10 +266,30 @@ export const AttributeTypesForm = ({
 				setting.name = name;
 
 				ctrl.onNameChange(name);
-				ctrl.onSubtypeChange(subtype as MediaContentTypes);
+				(ctrl as MediaTypeSettingFormControl).onSubtypeChange(
+					subtype as MediaContentTypes
+				);
 				ctrl.onSettingValueChange(advancedSettingFlag);
 			}
-			onSubmit(setting as TypeSetting, attributeId);
+
+			if (setting instanceof PostTypeSetting) {
+				setting.comment = comment;
+				setting.reaction = reaction;
+				setting.name = name;
+
+				ctrl.onNameChange(name);
+				(ctrl as PostTypeSettingsFormControl).onCommentChange(comment);
+				(ctrl as PostTypeSettingsFormControl).onReactionChange(
+					reaction
+				);
+			}
+
+			if (setting instanceof PostsTypeSetting) {
+				setting.name = name;
+				ctrl.onNameChange(name);
+			}
+
+			onSubmit?.(setting as TypeSetting, attributeId);
 		}
 	};
 	const handleSubTypeChange = (
@@ -246,10 +300,12 @@ export const AttributeTypesForm = ({
 			case TextTypes.short_text:
 			case TextTypes.long_text:
 			case TextTypes.reach_text:
+				(ctrl as TextTypeSettingsFormControl).onSubtypeChange(value);
+				break;
 			case MediaTypes.image:
 			case MediaTypes.audio:
 			case MediaTypes.video:
-				ctrl.onSubtypeChange(value);
+				(ctrl as MediaTypeSettingFormControl).onSubtypeChange(value);
 				break;
 			case 'code':
 				break;
@@ -264,6 +320,7 @@ export const AttributeTypesForm = ({
 		setSubmitButtonEnable(isValid);
 		setName(value);
 		ctrl.onNameChange(value);
+		controller?.onNameChange(value);
 	};
 
 	const handleAdvancedSettingsChange = (
@@ -296,7 +353,7 @@ export const AttributeTypesForm = ({
 				row
 				aria-labelledby="text-type-radio-buttons-group-label"
 				onChange={handleSubTypeChange}
-				value={ctrl.subtype}
+				value={(ctrl as TextTypeSettingsFormControl).subtype}
 				name="text-type-radio-buttons-group"
 			>
 				<FormControlLabel
@@ -345,7 +402,7 @@ export const AttributeTypesForm = ({
 				row
 				aria-labelledby="media-type-radio-buttons-group-label"
 				onChange={handleSubTypeChange}
-				value={ctrl.subtype}
+				value={(ctrl as MediaTypeSettingFormControl).subtype}
 				name="media-type-radio-buttons-group"
 			>
 				<FormControlLabel
@@ -396,6 +453,44 @@ export const AttributeTypesForm = ({
 		}
 	};
 
+	const getAdditionalBaseOptions = (type: SupportedAttributeTypes) => {
+		switch (type) {
+			case 'post':
+				return (
+					<FormGroup>
+						<FormControlLabel
+							value="comment"
+							control={
+								<Checkbox
+									checked={comment}
+									onChange={(e) => {
+										(
+											ctrl as PostTypeSettingsFormControl
+										).onCommentChange(e.target.checked);
+									}}
+								/>
+							}
+							label="Comment"
+						/>
+						<FormControlLabel
+							value="reaction"
+							control={
+								<Checkbox
+									checked={reaction}
+									onChange={(e) => {
+										(
+											ctrl as PostTypeSettingsFormControl
+										).onReactionChange(e.target.checked);
+									}}
+								/>
+							}
+							label="Reaction"
+						/>
+					</FormGroup>
+				);
+		}
+	};
+
 	const BaseSettings = () => {
 		if (type) {
 			return (
@@ -411,6 +506,7 @@ export const AttributeTypesForm = ({
 							onChange={handleTypeNameChange}
 						/>
 						{getSubTypeOptions(type)}
+						{getAdditionalBaseOptions(type)}
 					</FormControl>
 				</Box>
 			);
@@ -577,13 +673,15 @@ export const AttributeTypesForm = ({
 						minLength={false}
 					/>
 				</SettingsTabPanel>
-				<Button
-					onClick={handleSubmit}
-					variant="contained"
-					disabled={!submitButtonEnable}
-				>
-					{submitButtonLabel ?? null}
-				</Button>
+				{onSubmit && (
+					<Button
+						onClick={handleSubmit}
+						variant="contained"
+						disabled={!submitButtonEnable}
+					>
+						{submitButtonLabel ?? 'Submit'}
+					</Button>
+				)}
 			</Box>
 		);
 	};

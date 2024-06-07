@@ -47,7 +47,6 @@ export const ImageViewer = ({
 
 	useEffect(() => {
 		setOpen(true);
-		console.log('Selected Index:', selectedIndex);
 	}, [selectedIndex]);
 
 	return (

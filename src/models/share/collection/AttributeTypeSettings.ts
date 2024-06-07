@@ -64,6 +64,8 @@ export interface MediaTypeSettingDbModel extends TypeSettingDbModel {
 export type AttributeSettingTypes =
 	| TypeSetting
 	| TextTypeSetting
+	| PostTypeSetting
+	| PostsTypeSetting
 	// | CodeTypeSetting
 	| MediaTypeSetting
 	| DocumentTypeSetting
@@ -102,21 +104,24 @@ export class TextTypeSetting extends TypeSetting {
 	}
 }
 
-// export class CodeTypeSetting extends TextTypeSetting {
-// 	private _language: CodeLanguageTypes;
+export class PostTypeSetting extends TypeSetting {
+	public comment: boolean;
+	public reaction: boolean;
 
-// 	constructor() {
-// 		super();
-// 		this.type = CodeSchema.type;
-// 		this._language = CodeSchema.language;
-// 		this.maxLength = CodeSchema.maxLength;
-// 		this.minLength = CodeSchema.minLength;
-// 	}
+	constructor() {
+		super();
+		this.type = 'post';
+		this.comment = true;
+		this.reaction = true;
+	}
+}
 
-// 	public set language(value: CodeLanguageTypes) {
-// 		this._language = value;
-// 	}
-// }
+export class PostsTypeSetting extends TypeSetting {
+	constructor() {
+		super();
+		this.type = 'posts';
+	}
+}
 
 export class MediaTypeSetting extends TypeSetting {
 	// allowed extension

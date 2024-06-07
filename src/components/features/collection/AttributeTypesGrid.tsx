@@ -37,7 +37,7 @@ function AttributeTypesGrid({
             </Typography>
           </Button>
         </Grid> */}
-				<Grid xs={6}>
+				{/* <Grid xs={6}>
 					<Button
 						variant="outlined"
 						sx={{ width: '100%', display: 'flex', gap: 2 }}
@@ -47,7 +47,7 @@ function AttributeTypesGrid({
 							Code snippet with syntax highlighting
 						</Typography>
 					</Button>
-				</Grid>
+				</Grid> */}
 				<Grid xs={6}>
 					<Button
 						variant="outlined"
@@ -57,6 +57,18 @@ function AttributeTypesGrid({
 						<Typography variant="body1">Media</Typography>
 						<Typography variant="subtitle2" sx={{ color: 'gray' }}>
 							Image, audio, video
+						</Typography>
+					</Button>
+				</Grid>
+				<Grid xs={6}>
+					<Button
+						variant="outlined"
+						sx={{ width: '100%', display: 'flex', gap: 2 }}
+						onClick={() => onClick(SupportedAttributes.post)}
+					>
+						<Typography variant="body1">Post</Typography>
+						<Typography variant="subtitle2" sx={{ color: 'gray' }}>
+							Single post with title, comment, and reaction
 						</Typography>
 					</Button>
 				</Grid>
@@ -126,6 +138,18 @@ function AttributeTypesGrid({
 						<Typography variant="body1">Dynamic</Typography>
 						<Typography variant="subtitle2" sx={{ color: 'gray' }}>
 							Dynamic content
+						</Typography>
+					</Button>
+				</Grid>
+				<Grid xs={6}>
+					<Button
+						variant="outlined"
+						sx={{ width: '100%', display: 'flex', gap: 2 }}
+						onClick={() => onClick(SupportedAttributes.posts)}
+					>
+						<Typography variant="body1">Posts</Typography>
+						<Typography variant="subtitle2" sx={{ color: 'gray' }}>
+							Collection of posts
 						</Typography>
 					</Button>
 				</Grid>

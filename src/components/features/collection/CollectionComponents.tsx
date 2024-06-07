@@ -7,10 +7,14 @@ import { AttributeTypesForm } from './forms/AttributeTypesForm';
 import { getCollectionAdvancedSettingFlag } from '../../../utils/Flags';
 import { useContext, useEffect, useState } from 'react';
 import {
+	MediaTypeSettingDbModel,
 	TextTypeSettingDbModel,
 	TypeSetting
 } from '../../../models/share/collection/AttributeTypeSettings';
-import { TextContentTypes } from '../../../models/share/collection/BaseSchema';
+import {
+	MediaContentTypes,
+	TextContentTypes
+} from '../../../models/share/collection/BaseSchema';
 import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
 import { CollectionApiService } from '../../../services/ApiService';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
@@ -40,10 +44,12 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 	const { onClose, open, attribute, collection } = props;
 
 	const [name, setName] = useState(attribute.setting.name ?? '');
-	const [subtype, setSubtype] = useState<string>(
+	const [subtype, setSubtype] = useState<
+		TextContentTypes | MediaContentTypes
+	>(
 		attribute.setting.type === 'text'
-			? (attribute.setting as TextTypeSettingDbModel).textType
-			: ''
+			? (attribute.setting as TextTypeSettingDbModel).textSubType
+			: (attribute.setting as MediaTypeSettingDbModel).mediaSubType
 	);
 	const [advancedSettingFlag, setAdvancedSettingFlag] = useState(
 		getCollectionAdvancedSettingFlag({
@@ -82,8 +88,8 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 		setName(attribute.setting.name);
 		setSubtype(
 			attribute.setting.type === 'text'
-				? (attribute.setting as TextTypeSettingDbModel).textType
-				: ''
+				? (attribute.setting as TextTypeSettingDbModel).textSubType
+				: (attribute.setting as MediaTypeSettingDbModel).mediaSubType
 		);
 		setAdvancedSettingFlag(
 			getCollectionAdvancedSettingFlag({

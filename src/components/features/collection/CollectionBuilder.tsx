@@ -6,6 +6,8 @@ import { CreateCollectionDialog } from './CollectionComponents';
 import {
 	AttributeSettingTypes,
 	MediaTypeSetting,
+	PostTypeSetting,
+	PostsTypeSetting,
 	TextTypeSetting
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
@@ -84,6 +86,23 @@ export class CollectionBuilder implements ICollectionBuilder {
 				this.form.attributes?.push(
 					new CollectionAttribute(
 						setting as MediaTypeSetting,
+						new BaseContent()
+					)
+				);
+				break;
+			case PostTypeSetting:
+				this.form.attributes?.push(
+					new CollectionAttribute(
+						setting as PostTypeSetting,
+						new BaseContent()
+					)
+				);
+				break;
+
+			case PostsTypeSetting:
+				this.form.attributes?.push(
+					new CollectionAttribute(
+						setting as PostsTypeSetting,
 						new BaseContent()
 					)
 				);

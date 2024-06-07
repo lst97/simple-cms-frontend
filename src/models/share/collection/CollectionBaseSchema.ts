@@ -2,6 +2,8 @@ export class SupportedAttributes {
 	static readonly text = 'text';
 	static readonly code = 'code';
 	static readonly media = 'media';
+	static readonly posts = 'posts';
+	static readonly post = 'post';
 	static readonly document = 'document';
 	static readonly date = 'date';
 	static readonly decimal = 'decimal';
@@ -13,6 +15,8 @@ export class SupportedAttributes {
 export type SupportedAttributeTypes =
 	| 'text'
 	| 'code'
+	| 'posts'
+	| 'post'
 	| 'media'
 	| 'document'
 	| 'date'

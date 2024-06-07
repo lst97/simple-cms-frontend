@@ -1,8 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import {
-	SupportedAttributeTypes,
-	SupportedAttributes
-} from '../../../models/share/collection/CollectionBaseSchema';
+import { SupportedAttributeTypes } from '../../../models/share/collection/CollectionBaseSchema';
 import { AttributeSettingTypes } from '../../../models/share/collection/AttributeTypeSettings';
 import CollectionBaseInfoForm, {
 	CollectionBaseInfoFormControl
@@ -104,6 +101,26 @@ export interface MediaTypeSettingFormControlValuesProps {
 	subtype?: MediaContentTypes;
 }
 
+export interface PostTypeSettingFormControlValuesProps {
+	name: string;
+	comment: boolean;
+	reaction: boolean;
+}
+
+export interface PostsTypeSettingFormControlValuesProps {
+	name: string;
+}
+
+export interface PostsTypeSettingsFormControlOnChangesProps {
+	onNameChange: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export interface PostTypeSettingFormControlOnChangesProps {
+	onCommentChange: React.Dispatch<React.SetStateAction<boolean>>;
+	onReactionChange: React.Dispatch<React.SetStateAction<boolean>>;
+	onNameChange: React.Dispatch<React.SetStateAction<string>>;
+}
+
 export interface TextTypeSettingFormControlOnChangesProps {
 	onNameChange: React.Dispatch<React.SetStateAction<string>>;
 	onMaxLengthChange: React.Dispatch<React.SetStateAction<number>>;
@@ -124,7 +141,9 @@ export interface MediaTypeSettingFormControlOnChangesProps {
 
 export type AttributeTypeSettingsControl =
 	| TextTypeSettingsFormControl
-	| MediaTypeSettingFormControl;
+	| MediaTypeSettingFormControl
+	| PostTypeSettingsFormControl
+	| PostsTypeSettingsFormControl;
 export class TextTypeSettingsFormControl extends TypeSettingsFormControlBase {
 	public subtype: TextContentTypes;
 	public maxLength: number;
@@ -290,6 +309,90 @@ export class MediaTypeSettingFormControl extends TypeSettingsFormControlBase {
 	};
 }
 
+// Chunk of post
+export class PostsTypeSettingsFormControl extends TypeSettingsFormControlBase {
+	constructor({
+		values,
+		onChanges,
+		advancedSettingCtrl
+	}: PostsTypeSettingControlProps = {}) {
+		super(
+			{
+				name: values?.name ?? '',
+				advancedSettingValue: advancedSettingCtrl?.value ?? 0
+			},
+			{
+				onNameChange: onChanges?.onNameChange ?? (() => {}),
+				onAdvancedSettingValueChange:
+					advancedSettingCtrl?.onValueChange ?? (() => {})
+			}
+		);
+	}
+
+	public setAdvancedSettingCtrlValue = (value: number) => {
+		this.settingValue = value;
+		this.onSettingValueChangeCallback(value);
+	};
+}
+
+export class PostTypeSettingsFormControl extends TypeSettingsFormControlBase {
+	public comment: boolean;
+	public reaction: boolean;
+
+	public onCommentChangeCallback: React.Dispatch<
+		React.SetStateAction<boolean>
+	>;
+	public onReactionChangeCallback: React.Dispatch<
+		React.SetStateAction<boolean>
+	>;
+
+	constructor({
+		values,
+		onChanges,
+		advancedSettingCtrl
+	}: PostTypeSettingControlProps = {}) {
+		super(
+			{
+				name: values?.name ?? '',
+				advancedSettingValue: advancedSettingCtrl?.value ?? 0
+			},
+			{
+				onNameChange: () => {},
+				onAdvancedSettingValueChange: () => {}
+			}
+		);
+		this.comment = values?.comment ?? true;
+		this.reaction = values?.reaction ?? true;
+
+		this.onNameChangeCallback = () => {};
+		this.onSettingValueChangeCallback = () => {};
+
+		this.onCommentChangeCallback = onChanges?.onCommentChange ?? (() => {});
+		this.onReactionChangeCallback =
+			onChanges?.onReactionChange ?? (() => {});
+	}
+
+	public setValues = (values: PostTypeSettingFormControlValuesProps) => {
+		this.comment = values.comment;
+		this.reaction = values.reaction;
+	};
+
+	public setAdvancedSettingCtrlValue = (value: number) => {
+		this.settingValue = value;
+		this.onSettingValueChangeCallback(value);
+	};
+
+	public onCommentChange = (value: boolean) => {
+		this.comment = value;
+		this.onCommentChangeCallback(value);
+	};
+
+	public onReactionChange = (value: boolean) => {
+		this.reaction = value;
+		this.onReactionChangeCallback(value);
+	};
+}
+
 export interface TextTypeSettingControlProps {
 	values?: TextTypeSettingFormControlValuesProps;
 	onChanges?: TextTypeSettingFormControlOnChangesProps;
@@ -299,6 +402,18 @@ export interface TextTypeSettingControlProps {
 export interface MediaTypeSettingControlProps {
 	values?: MediaTypeSettingFormControlValuesProps;
 	onChanges?: MediaTypeSettingFormControlOnChangesProps;
+	advancedSettingCtrl?: AdvancedSettingFormControlProps;
+}
+
+export interface PostTypeSettingControlProps {
+	values?: PostTypeSettingFormControlValuesProps;
+	onChanges?: PostTypeSettingFormControlOnChangesProps;
+	advancedSettingCtrl?: AdvancedSettingFormControlProps;
+}
+
+export interface PostsTypeSettingControlProps {
+	values?: PostsTypeSettingFormControlValuesProps;
+	onChanges?: PostsTypeSettingsFormControlOnChangesProps;
 	advancedSettingCtrl?: AdvancedSettingFormControlProps;
 }
 
@@ -351,6 +466,13 @@ export class CollectionFormController {
 	get formBuilder() {
 		return this.collectionBuilder;
 	}
+
+	public setCollectionAttributeSettingFormCtrl(
+		ctrl: AttributeTypeSettingsControl
+	) {
+		this.collectionAttributeSettingFormCtrl = ctrl;
+		this.collectionAttributeSettingFormCtrl = ctrl;
+	}
 }
 export const CreateCollectionStepper = (
 	props?: CollectionFormControllersProps
@@ -378,7 +500,7 @@ export const CreateCollectionStepper = (
 	const [selectedAttributeType, setSelectedAttributeType] =
 		React.useState<SupportedAttributeTypes | null>(null);
 
-	// type setting hook
+	// text && media setting hook
 	const [attributeName, setAttributeName] = React.useState('');
 	const [advancedSettingValue, setAdvancedSettingValue] = React.useState(
 		props?.attributeTypeSettingsController.settingValue ?? 0
@@ -388,6 +510,10 @@ export const CreateCollectionStepper = (
 	const [subtype, setSubtype] = React.useState<
 		TextContentTypes | MediaContentTypes | ''
 	>('');
+
+	// post hook
+	const [comment, setComment] = React.useState(true);
+	const [reaction, setReaction] = React.useState(true);
 
 	// update the collection context with the new collection
 	const { collections, setCollections } = useContext(CollectionContext);
@@ -414,43 +540,109 @@ export const CreateCollectionStepper = (
 		ctrl?: AttributeTypeSettingsControl
 	) => {
 		if (type && ctrl === undefined) {
-			return new TextTypeSettingsFormControl({
-				values: {
-					name: attributeName,
-					maxLength: typeMaxLength,
-					minLength: typeMinLength,
-					subtype: TextTypes.short_text
-				},
-				onChanges: {
-					onNameChange: setAttributeName,
-					onMaxLengthChange: setTypeMaxLength,
-					onMinLengthChange: setTypeMinLength,
-					onSubtypeChange: setSubtype as React.Dispatch<
-						React.SetStateAction<
-							TextContentTypes | MediaContentTypes
-						>
-					>
-				},
-				advancedSettingCtrl: {
-					value: advancedSettingValue,
-					onValueChange: setAdvancedSettingValue
-				}
-			});
+			switch (type) {
+				// create new controller based on the selected attribute type if not provided
+				case 'text':
+					return new TextTypeSettingsFormControl({
+						values: {
+							name: attributeName,
+							maxLength: typeMaxLength,
+							minLength: typeMinLength,
+							subtype: TextTypes.short_text
+						},
+						onChanges: {
+							onNameChange: setAttributeName,
+							onMaxLengthChange: setTypeMaxLength,
+							onMinLengthChange: setTypeMinLength,
+							onSubtypeChange: setSubtype as React.Dispatch<
+								React.SetStateAction<
+									TextContentTypes | MediaContentTypes
+								>
+							>
+						},
+						advancedSettingCtrl: {
+							value: advancedSettingValue,
+							onValueChange: setAdvancedSettingValue
+						}
+					});
+				case 'media':
+					return new MediaTypeSettingFormControl({
+						values: {
+							name: attributeName,
+							maxLength: typeMaxLength,
+							minLength: typeMinLength,
+							maxSize: 0,
+							minSize: 0,
+							subtype: MediaTypes.image
+						},
+						onChanges: {
+							onNameChange: setAttributeName,
+							onMaxLengthChange: setTypeMaxLength,
+							onMinLengthChange: setTypeMinLength,
+							onMaxSizeChange: () => {},
+							onMinSizeChange: () => {},
+							onSubtypeChange: setSubtype as React.Dispatch<
+								React.SetStateAction<string>
+							>
+						},
+						advancedSettingCtrl: {
+							value: advancedSettingValue,
+							onValueChange: setAdvancedSettingValue
+						}
+					});
+				case 'post':
+					return new PostTypeSettingsFormControl({
+						values: {
+							comment: comment,
+							reaction: reaction,
+							name: attributeName
+						},
+						onChanges: {
+							onCommentChange: setComment,
+							onReactionChange: setReaction,
+							onNameChange: setAttributeName
+						},
+						advancedSettingCtrl: {
+							value: advancedSettingValue,
+							onValueChange: setAdvancedSettingValue
+						}
+					});
+				// chunk of post
+				case 'posts':
+					return new PostsTypeSettingsFormControl({
+						values: {
+							name: attributeName
+						},
+						onChanges: {
+							onNameChange: setAttributeName
+						},
+						advancedSettingCtrl: {
+							value: advancedSettingValue,
+							onValueChange: setAdvancedSettingValue
+						}
+					});
+			}
 		}
 	};
 
 	// dynamic controllers
-	const [collectionAttributeSettingFormCtrl] = React.useState(
-		getCollectionAttributeSettingFormCtrl(
-			selectedAttributeType,
-			props?.attributeTypeSettingsController
-		)
-	);
+	const [
+		collectionAttributeSettingFormCtrl,
+		setCollectionAttributeSettingFormCtrl
+	] = React.useState<
+		| TextTypeSettingsFormControl
+		| MediaTypeSettingFormControl
+		| PostTypeSettingsFormControl
+		| PostsTypeSettingsFormControl
+	>();
 
 	const [ctrl] = React.useState(
 		new CollectionFormController(
 			collectionBaseInfoCtrl,
-			collectionAttributeSettingFormCtrl
+			getCollectionAttributeSettingFormCtrl(
+				selectedAttributeType,
+				props?.attributeTypeSettingsController
+			)
 		)
 	);
 
@@ -466,6 +658,22 @@ export const CreateCollectionStepper = (
 		collectionSubdirectoryInput,
 		ctrl.formBuilder
 	]);
+
+	useEffect(() => {
+		if (collectionAttributeSettingFormCtrl) {
+			ctrl.setCollectionAttributeSettingFormCtrl(
+				collectionAttributeSettingFormCtrl
+			);
+		}
+	}, [collectionAttributeSettingFormCtrl, ctrl]);
+
+	useEffect(() => {
+		if (selectedAttributeType) {
+			setCollectionAttributeSettingFormCtrl(
+				getCollectionAttributeSettingFormCtrl(selectedAttributeType)
+			);
+		}
+	}, [selectedAttributeType]);
 
 	const steps = ['Configuration', 'Select type', 'Review'];
 
@@ -546,6 +754,11 @@ export const CreateCollectionStepper = (
 		ctrl.formBuilder.addAttributeTypeSetting(settings);
 		setSelectedAttributeType(null);
 		setNextStepDisabled(false);
+
+		if (selectedAttributeType === 'posts') {
+			console.log(ctrl.formBuilder);
+			handleNext();
+		}
 	};
 
 	const handleAttributeTypeSelect = (type: SupportedAttributeTypes) => {
@@ -563,16 +776,33 @@ export const CreateCollectionStepper = (
 				);
 			// attribute type selection
 			case 1:
-				return selectedAttributeType !== null ? (
-					<AttributeTypesForm
-						onSubmit={handleAddAnotherAttribute}
-						type={selectedAttributeType}
-						controller={collectionAttributeSettingFormCtrl}
-						submitButtonLabel="Add another attribute"
-					/>
-				) : (
-					<AttributeTypesGrid onClick={handleAttributeTypeSelect} />
-				);
+				switch (selectedAttributeType) {
+					case 'text':
+					case 'media':
+					case 'post':
+						return (
+							<AttributeTypesForm
+								onSubmit={handleAddAnotherAttribute}
+								type={selectedAttributeType}
+								controller={collectionAttributeSettingFormCtrl}
+								submitButtonLabel="Add another attribute"
+							/>
+						);
+					case 'posts':
+						return (
+							<AttributeTypesForm
+								onSubmit={handleAddAnotherAttribute}
+								type={selectedAttributeType}
+								controller={collectionAttributeSettingFormCtrl}
+							/>
+						);
+					default:
+						return (
+							<AttributeTypesGrid
+								onClick={handleAttributeTypeSelect}
+							/>
+						);
+				}
 
 			case 2:
 				return (
