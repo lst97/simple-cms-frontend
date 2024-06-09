@@ -212,6 +212,50 @@ export class CollectionApiService extends ApiResultIndicator {
 	}
 }
 
+export class PostsApiService extends ApiResultIndicator {
+	static async getPostsCollection(
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().get(
+				formatRoutes(ApiConfig.instance.routes.fetchPostsCollection, {
+					slug: slug
+				})
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
+
+	static async getPostBySlug(
+		postsCollectionSlug: string,
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().get(
+				formatRoutes(ApiConfig.instance.routes.fetchPostBySlug, {
+					postsCollectionSlug: postsCollectionSlug,
+					slug: slug
+				})
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
+}
+
 export class AuthApiService extends ApiResultIndicator {
 	static async login(form: LoginForm, ...errorHandlers: IApiErrorHandler[]) {
 		try {

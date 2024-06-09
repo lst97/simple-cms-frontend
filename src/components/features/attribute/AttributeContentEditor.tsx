@@ -9,6 +9,13 @@ import {
 	ImageList,
 	ImageListItem,
 	ImageListItemBar,
+	Paper,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
 	Typography
 } from '@mui/material';
 import { useContext, useEffect, useState } from 'react';
@@ -38,6 +45,11 @@ import {
 	IParallelFilesUploadContent
 } from '../../../models/share/collection/AttributeContents';
 import { ImageViewer } from '../../common/medias/ImageViewer';
+import {
+	CollectionDbModel,
+	ICollectionDbModel
+} from '../../../models/share/collection/Collection';
+import { PostsApiService } from '../../../services/ApiService';
 
 const PlainTextEditor = (props: {
 	value: string;
@@ -251,6 +263,77 @@ const FilesUploader = (props: {
 	);
 };
 
+const PostsEditor = (props: {
+	slug: string;
+	attributes: ICollectionDbModel[];
+	value?: ICollectionDbModel[];
+	onChange?: (value: ICollectionDbModel[]) => void;
+}) => {
+	const { value, onChange } = props;
+
+	return (
+		<>
+			<TableContainer component={Paper}>
+				<Table sx={{ minWidth: 650 }} aria-label="simple table">
+					<TableHead>
+						<TableRow>
+							<TableCell>Title</TableCell>
+							<TableCell align="right">Author</TableCell>
+							<TableCell align="right">Categories</TableCell>
+							<TableCell align="right">Tags</TableCell>
+							<TableCell align="right">Comments</TableCell>
+							<TableCell align="right">Date</TableCell>
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{props.attributes.map((attribute) => (
+							<TableRow
+								key={`${
+									(
+										attribute
+											.attributes[0] as CollectionAttributeDbModel
+									).content.value
+								}`}
+								sx={{
+									'&:last-child td, &:last-child th': {
+										border: 0
+									}
+								}}
+							>
+								<TableCell component="th" scope="row">
+									{`${
+										(
+											attribute
+												.attributes[0] as CollectionAttributeDbModel
+										).content.value
+									}`}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{attribute.setting?.comment &&
+										`${
+											(
+												attribute
+													.attributes[0] as CollectionAttributeDbModel
+											).content.value
+										}`}
+								</TableCell>
+								<TableCell align="right">
+									{attribute.createdAt.toISOString()}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</TableContainer>
+		</>
+	);
+};
 const AttributeContentEditor = ({
 	slug,
 	selectedCollectionIndex,
@@ -263,6 +346,7 @@ const AttributeContentEditor = ({
 	attribute: CollectionAttributeDbModel;
 }) => {
 	const { setCollections } = useContext(CollectionContext);
+	const [posts, setPosts] = useState<ICollectionDbModel[]>([]);
 
 	const textTypeComponents = {
 		long_text: PlainTextEditor,
@@ -274,6 +358,10 @@ const AttributeContentEditor = ({
 		image: GalleryEditor,
 		audio: FilesUploader,
 		video: FilesUploader
+	};
+
+	const fetchPosts = async () => {
+		return await PostsApiService.getPostsCollection(slug);
 	};
 
 	switch (attribute.setting.type) {
@@ -294,11 +382,13 @@ const AttributeContentEditor = ({
 						onChange={(value) => {
 							setCollections((prevCollections) => {
 								const updatedCollections = [...prevCollections];
-								updatedCollections[
-									selectedCollectionIndex
-								].attributes[
-									selectedAttributeIndex
-								].content.value = value;
+
+								(
+									updatedCollections[selectedCollectionIndex]
+										.attributes[
+										selectedAttributeIndex
+									] as CollectionAttributeDbModel
+								).content.value = value;
 								return updatedCollections;
 							});
 						}}
@@ -322,6 +412,24 @@ const AttributeContentEditor = ({
 				</>
 			);
 		}
+		case 'posts':
+			fetchPosts()
+				.then((result: ICollectionDbModel) => {
+					// handle the result here
+					setPosts(result.attributes as ICollectionDbModel[]);
+				})
+				.catch((error) => {
+					// handle the error here
+					console.error(error);
+				});
+			return (
+				<>
+					<Typography variant="h6" sx={{ p: 1 }}>
+						{attribute.setting.name}
+					</Typography>
+					<PostsEditor slug={slug} attributes={posts} />
+				</>
+			);
 		default:
 			// Handle default case or potential errors
 			break;

@@ -5,6 +5,8 @@ interface RoutesUrls {
 	createCollection: string;
 	fetchCollections: string;
 	fetchCollection: string;
+	fetchPostsCollection: string;
+	fetchPostBySlug: string;
 	updateCollectionAttributes: string;
 	updateCollectionAttribute: string;
 	deleteCollectionAttribute: string;
@@ -59,6 +61,8 @@ export class ApiConfig {
 			createCollection: `${baseUrl}/collections`,
 			fetchCollections: `${baseUrl}/collections`,
 			fetchCollection: `${baseUrl}/collections/{slug}`,
+			fetchPostsCollection: `${baseUrl}/posts/{slug}`,
+			fetchPostBySlug: `${baseUrl}/posts/{postsCollectionSlug}/{slug}`,
 			updateCollectionAttributes: `${baseUrl}/collections/{slug}/attributes`,
 			updateCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}?setting={setting}&content={content}`,
 			addCollectionAttribute: `${baseUrl}/collections/{slug}/attribute`,
