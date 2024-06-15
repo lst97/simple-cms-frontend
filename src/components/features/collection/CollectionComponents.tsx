@@ -1,8 +1,5 @@
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
-import {
-	CreateCollectionStepper,
-	TextTypeSettingsFormControl
-} from './CollectionStepper';
+import { CreateCollectionStepper } from './CollectionStepper';
 import { AttributeTypesForm } from './forms/AttributeTypesForm';
 import { getCollectionAdvancedSettingFlag } from '../../../utils/Flags';
 import { useContext, useEffect, useState } from 'react';
@@ -63,27 +60,6 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 	const [maxLength, setMaxLength] = useState(0);
 	const [minLength, setMinLength] = useState(0);
 
-	const [ctrl] = useState<TextTypeSettingsFormControl>(
-		new TextTypeSettingsFormControl({
-			values: {
-				name: name,
-				subtype: subtype as TextContentTypes,
-				maxLength: maxLength,
-				minLength: minLength
-			},
-			onChanges: {
-				onNameChange: setName,
-				onMaxLengthChange: setMaxLength,
-				onMinLengthChange: setMinLength,
-				onSubtypeChange: setSubtype
-			},
-			advancedSettingCtrl: {
-				value: advancedSettingFlag,
-				onValueChange: setAdvancedSettingFlag
-			}
-		})
-	);
-
 	useEffect(() => {
 		setName(attribute.setting.name);
 		setSubtype(
@@ -113,18 +89,18 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 
 		if (!attribute) return;
 
-		collection.attributes = collection.attributes.map((attr) => {
-			if (attr._id === attributeId) {
-				return {
-					...attr,
-					setting: {
-						...attr.setting,
-						_id: attributeId
-					}
-				};
-			}
-			return attr;
-		});
+		// collection.attributes = collection.attributes.map((attr) => {
+		// 	if (attr._id === attributeId) {
+		// 		return {
+		// 			...attr,
+		// 			setting: {
+		// 				...attr.setting,
+		// 				_id: attributeId
+		// 			}
+		// 		};
+		// 	}
+		// 	return attr;
+		// });
 
 		CollectionApiService.updateCollectionAttribute(
 			collection.slug,
@@ -171,13 +147,13 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 					<DialogTitle>Edit attribute</DialogTitle>
 
 					<DialogContent>
-						<AttributeTypesForm
+						{/* <AttributeTypesForm
 							onSubmit={handleOnSubmit}
 							type={attribute.setting.type ?? undefined}
 							attributeId={attribute._id}
 							controller={ctrl}
 							submitButtonLabel="Submit"
-						/>
+						/> */}
 					</DialogContent>
 				</>
 			) : null}

@@ -6,6 +6,8 @@ import {
 	TextTypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
+	Box,
+	Button,
 	ImageList,
 	ImageListItem,
 	ImageListItemBar,
@@ -50,6 +52,9 @@ import {
 	ICollectionDbModel
 } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
+import AttributeTypesGrid from '../collection/AttributeTypesGrid';
+import { CreateCollectionStepper } from '../collection/CollectionStepper';
+import { AttributeTypesForm } from '../collection/forms/AttributeTypesForm';
 
 const PlainTextEditor = (props: {
 	value: string;
@@ -265,75 +270,95 @@ const FilesUploader = (props: {
 
 const PostsEditor = (props: {
 	slug: string;
-	attributes: ICollectionDbModel[];
+	posts: ICollectionDbModel[];
 	value?: ICollectionDbModel[];
 	onChange?: (value: ICollectionDbModel[]) => void;
 }) => {
 	const { value, onChange } = props;
 
 	return (
-		<>
-			<TableContainer component={Paper}>
-				<Table sx={{ minWidth: 650 }} aria-label="simple table">
-					<TableHead>
-						<TableRow>
-							<TableCell>Title</TableCell>
-							<TableCell align="right">Author</TableCell>
-							<TableCell align="right">Categories</TableCell>
-							<TableCell align="right">Tags</TableCell>
-							<TableCell align="right">Comments</TableCell>
-							<TableCell align="right">Date</TableCell>
-						</TableRow>
-					</TableHead>
-					<TableBody>
-						{props.attributes.map((attribute) => (
-							<TableRow
-								key={`${
+		<TableContainer component={Paper}>
+			<Table sx={{ minWidth: 650 }} aria-label="simple table">
+				<TableHead>
+					<TableRow>
+						<TableCell>Title</TableCell>
+						<TableCell align="right">Author</TableCell>
+						<TableCell align="right">Categories</TableCell>
+						<TableCell align="right">Tags</TableCell>
+						<TableCell align="right">Comments</TableCell>
+						<TableCell align="right">Date</TableCell>
+					</TableRow>
+				</TableHead>
+				<TableBody>
+					{props.posts.map((post) => (
+						<TableRow
+							key={`${
+								(
+									post
+										.attributes[0] as CollectionAttributeDbModel
+								).content.value
+							}`}
+							sx={{
+								'&:last-child td, &:last-child th': {
+									border: 0
+								}
+							}}
+						>
+							<TableCell component="th" scope="row">
+								{`${
 									(
-										attribute
+										post
 											.attributes[0] as CollectionAttributeDbModel
 									).content.value
 								}`}
-								sx={{
-									'&:last-child td, &:last-child th': {
-										border: 0
-									}
-								}}
-							>
-								<TableCell component="th" scope="row">
-									{`${
+							</TableCell>
+							<TableCell align="right">
+								{'Not implemented'}
+							</TableCell>
+							<TableCell align="right">
+								{'Not implemented'}
+							</TableCell>
+							<TableCell align="right">
+								{post.setting?.comment &&
+									`${
 										(
-											attribute
+											post
 												.attributes[0] as CollectionAttributeDbModel
 										).content.value
 									}`}
-								</TableCell>
-								<TableCell align="right">
-									{'Not implemented'}
-								</TableCell>
-								<TableCell align="right">
-									{'Not implemented'}
-								</TableCell>
-								<TableCell align="right">
-									{attribute.setting?.comment &&
-										`${
-											(
-												attribute
-													.attributes[0] as CollectionAttributeDbModel
-											).content.value
-										}`}
-								</TableCell>
-								<TableCell align="right">
-									{attribute.createdAt.toISOString()}
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</TableContainer>
-		</>
+							</TableCell>
+							<TableCell align="right">
+								{post.createdAt.toISOString()}
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</TableContainer>
 	);
 };
+
+const PostContentEditor = (props: {
+	slug: string;
+	attributes: CollectionAttributeDbModel[];
+	value?: ICollectionDbModel;
+	onChange?: (value: ICollectionDbModel) => void;
+}) => {
+	const [posts, setPosts] = useState<ICollectionDbModel | undefined>(
+		props.value
+	);
+
+	const fetchPosts = async () => {
+		return await PostsApiService.getPostsCollection(props.slug);
+	};
+
+	useEffect(() => {
+		fetchPosts().then((posts) => setPosts(posts));
+	}, []);
+
+	return <></>;
+};
+
 const AttributeContentEditor = ({
 	slug,
 	selectedCollectionIndex,
@@ -346,7 +371,10 @@ const AttributeContentEditor = ({
 	attribute: CollectionAttributeDbModel;
 }) => {
 	const { setCollections } = useContext(CollectionContext);
-	const [posts, setPosts] = useState<ICollectionDbModel[]>([]);
+	const [postsCollection, setPostsCollection] =
+		useState<ICollectionDbModel>();
+
+	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
 
 	const textTypeComponents = {
 		long_text: PlainTextEditor,
@@ -363,6 +391,10 @@ const AttributeContentEditor = ({
 	const fetchPosts = async () => {
 		return await PostsApiService.getPostsCollection(slug);
 	};
+
+	useEffect(() => {
+		fetchPosts().then((posts) => setPostsCollection(posts));
+	}, []);
 
 	switch (attribute.setting.type) {
 		case 'text': {
@@ -413,21 +445,41 @@ const AttributeContentEditor = ({
 			);
 		}
 		case 'posts':
-			fetchPosts()
-				.then((result: ICollectionDbModel) => {
-					// handle the result here
-					setPosts(result.attributes as ICollectionDbModel[]);
-				})
-				.catch((error) => {
-					// handle the error here
-					console.error(error);
-				});
 			return (
 				<>
-					<Typography variant="h6" sx={{ p: 1 }}>
-						{attribute.setting.name}
-					</Typography>
-					<PostsEditor slug={slug} attributes={posts} />
+					{!addPostDialogOpen && (
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'row',
+								justifyContent: 'space-between'
+							}}
+						>
+							<Typography variant="h6" sx={{ p: 1 }}>
+								{attribute.setting.name}
+							</Typography>
+							<Button
+								variant="outlined"
+								onClick={() => {
+									setAddPostDialogOpen(true);
+								}}
+							>
+								add post
+							</Button>
+						</Box>
+					)}
+
+					{!addPostDialogOpen && (
+						<PostsEditor
+							slug={slug}
+							posts={
+								(postsCollection?.attributes as ICollectionDbModel[]) ??
+								[]
+							}
+						/>
+					)}
+
+					{addPostDialogOpen}
 				</>
 			);
 		default:

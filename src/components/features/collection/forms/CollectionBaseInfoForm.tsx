@@ -1,236 +1,167 @@
 import { TextField, Tooltip, Typography } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
-import { useState } from 'react';
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
 import { SubdirectoryRegex } from '../../../../schemas/SubdirectorySchema';
-import { extractSlug } from '../../../../utils/Misc';
-/**
- * initial values for the collection base info form
- */
-interface CollectionBaseInfoFormValues {
-	name: string;
-	description: string;
-	subdirectory: string;
+import { useFormik } from 'formik';
+import DebugFormik from '../../../debug/DebugFormik';
+import { useEffect } from 'react';
+
+export class CollectionBaseInfoFormControl {}
+export class CollectionBaseInfoFormValues {
+	collectionName: string = '';
+	collectionDescription: string = '';
+	collectionSubdirectory: string = '/';
+
+	// subdirectory input textfield value
+	pendingSubdirectory: string = '';
 }
 
-interface CollectionBaseInfoFormOnChanges {
-	onNameChange: React.Dispatch<React.SetStateAction<string>>;
-	onDescriptionChange: React.Dispatch<React.SetStateAction<string>>;
-	onSubdirectoryChange: React.Dispatch<React.SetStateAction<string>>;
-}
-
-export interface CollectionBaseInfoFormProps {
-	values: CollectionBaseInfoFormValues;
-	onChanges: CollectionBaseInfoFormOnChanges;
-}
-
-export class CollectionBaseInfoFormControl {
-	private _values: CollectionBaseInfoFormValues;
-	private _onChanges: CollectionBaseInfoFormOnChanges;
-
-	set values(values: CollectionBaseInfoFormValues) {
-		this._values.name = values.name ?? '';
-		this._values.description = values.description ?? '';
-		this._values.subdirectory = values.subdirectory ?? '';
-	}
-
-	set onChanges(onChanges: CollectionBaseInfoFormOnChanges) {
-		this._onChanges.onNameChange = onChanges.onNameChange;
-		this._onChanges.onDescriptionChange = onChanges.onDescriptionChange;
-		this._onChanges.onSubdirectoryChange = onChanges.onSubdirectoryChange;
-	}
-
-	get onChanges(): CollectionBaseInfoFormOnChanges {
-		return this._onChanges;
-	}
-
-	get values(): CollectionBaseInfoFormValues {
-		return this._values;
-	}
-
-	constructor(props?: CollectionBaseInfoFormProps) {
-		if (!props) {
-			props = {
-				values: {
-					name: '',
-					description: '',
-					subdirectory: ''
-				},
-				onChanges: {
-					onNameChange: () => {},
-					onDescriptionChange: () => {},
-					onSubdirectoryChange: () => {}
-				}
-			};
-		}
-
-		this._values = props.values ?? {};
-		this._onChanges = props.onChanges;
-	}
-}
-
-const CollectionBaseInfoForm = ({
-	controller
-}: {
-	controller?: CollectionBaseInfoFormControl;
+const CollectionBaseInfoForm = (props: {
+	initialValues?: CollectionBaseInfoFormValues;
+	onValuesChange?: (values: CollectionBaseInfoFormValues) => void;
 }) => {
-	const [values, setValues] = useState<CollectionBaseInfoFormValues>(
-		controller?.values ?? {
-			name: controller?.values?.name ?? '',
-			description: controller?.values?.description ?? '',
-			subdirectory: controller?.values?.subdirectory ?? ''
-		}
-	);
+	const formik = useFormik({
+		initialValues:
+			props.initialValues ?? new CollectionBaseInfoFormValues(),
+		onSubmit: (values) => {}
+	});
 
-	const [pendingSubdirectory, setPendingSubdirectory] = useState<string>('');
+	const extractSlug = (subdirectory: string) => {
+		const parts = subdirectory.slice(0, -1).split('/');
+		const slug = parts.pop();
+		const newSubdirectory = parts.join('/').concat('/');
 
-	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-		if (event.key === 'Backspace' && pendingSubdirectory === '') {
-			event.preventDefault();
-			const { slug, modifiedUrl } = extractSlug(values.subdirectory);
-			setValues({
-				...values,
-				subdirectory: modifiedUrl
-			});
-			controller?.onChanges.onSubdirectoryChange(modifiedUrl);
-			setPendingSubdirectory(slug ?? '');
-		}
+		return { slug, newSubdirectory };
 	};
 
-	const handleSubdirectoryChange = (
-		event: React.ChangeEvent<HTMLInputElement>
+	const handleSubdirectoryInputKeyDown = (
+		event: React.KeyboardEvent<HTMLDivElement>
 	) => {
-		const value = event.target.value.trim();
-
-		if (value === '') {
-			setPendingSubdirectory(value);
-			return;
-		}
-
 		if (
-			RegExp(SubdirectoryRegex.collectionSubdirectoryRegex).test(
-				value
-			) === false ||
-			value.startsWith('/')
+			event.key === 'Backspace' &&
+			formik.values.pendingSubdirectory === ''
 		) {
-			return;
-		}
+			event.preventDefault();
 
-		if (value.endsWith('/')) {
-			setValues({
-				...values,
-				subdirectory: values.subdirectory + value
-			});
-			setPendingSubdirectory('');
-			controller?.onChanges.onSubdirectoryChange(
-				values.subdirectory + value
+			const { slug, newSubdirectory } = extractSlug(
+				formik.values.collectionSubdirectory
 			);
 
-			return;
+			formik.setFieldValue('collectionSubdirectory', newSubdirectory);
+			formik.setFieldValue('pendingSubdirectory', slug);
 		}
-
-		setPendingSubdirectory(value);
 	};
 
+	const handleSubdirectoryInputChange = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		event.persist();
+		let value = event.target.value.trim();
+
+		switch (value) {
+			case '':
+				break;
+			case '/':
+				value = '';
+				break;
+			default:
+				if (value.endsWith('/')) {
+					// set the subdirectory value in formik
+					formik.setFieldValue(
+						'collectionSubdirectory',
+						formik.values.collectionSubdirectory.concat(value)
+					);
+
+					value = '';
+				}
+		}
+		formik.setFieldValue('pendingSubdirectory', value);
+	};
+
+	const handleCollectionNamesChange = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		formik.setFieldValue('collectionName', event.target.value.trim());
+	};
+
+	useEffect(() => {
+		props.onValuesChange?.(formik.values);
+	}, [formik.values, props]);
+
 	return (
-		<Grid container spacing={2}>
-			<Grid xs={6}>
-				<TextField
-					id="create-collection-stepper-1-display-name"
-					sx={{ width: '100%' }}
-					label="Display name"
-					required={true}
-					variant="outlined"
-					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-						const value = event.target.value.toLocaleLowerCase();
+		<>
+			<Grid container spacing={2}>
+				<Grid xs={6}>
+					<TextField
+						id="create-collection-stepper-1-display-name"
+						name="collectionName"
+						sx={{ width: '100%' }}
+						label="Display name"
+						required={true}
+						variant="outlined"
+						onChange={handleCollectionNamesChange}
+						value={formik.values.collectionName}
+					/>
+				</Grid>
+				<Grid xs={6}>
+					<TextField
+						id="create-collection-stepper-1-description"
+						name="collectionDescription"
+						sx={{ width: '100%' }}
+						label="Description"
+						required={false}
+						variant="outlined"
+						onChange={formik.handleChange}
+						value={formik.values.collectionDescription}
+					/>
+				</Grid>
 
-						if (value === '') {
-							setValues({
-								...values,
-								name: event.target.value
-							});
-							controller?.onChanges.onNameChange(
-								event.target.value
-							);
-							return;
+				<Grid xs={12}>
+					{/* This is a pending subdirectory, the actual form value controlled by handleSubdirectoryChange */}
+					<TextField
+						sx={{ width: '100%' }}
+						id="create-collection-stepper-1-subdirectory"
+						name="collectionSubdirectory"
+						label="Subdirectory"
+						required={false}
+						variant="outlined"
+						inputProps={{
+							pattern:
+								SubdirectoryRegex.collectionSubdirectoryRegex
+									.source
+						}}
+						helperText={
+							<Tooltip
+								title={`${
+									ApiServiceConfig.instance().baseUrl
+								}/collections/${
+									formik.values.collectionSubdirectory
+								}${formik.values.collectionName.toLocaleLowerCase()}_[id]`}
+							>
+								<Typography
+									sx={{
+										maxWidth: '75%',
+										overflow: 'hidden',
+										textOverflow: 'ellipsis',
+										whiteSpace: 'nowrap',
+										direction: 'rtl', // Right-to-left text direction
+										textAlign: 'left' // Align text to the left (within RTL)
+									}}
+								>{`${
+									ApiServiceConfig.instance().baseUrl
+								}/collections/${
+									formik.values.collectionSubdirectory
+								}${formik.values.collectionName.toLocaleLowerCase()}_[id]`}</Typography>
+							</Tooltip>
 						}
-
-						if (
-							RegExp(SubdirectoryRegex.collectionNameRegex).test(
-								value
-							) === false
-						) {
-							return;
-						}
-
-						setValues({
-							...values,
-							name: event.target.value.trim().toLowerCase()
-						});
-						controller?.onChanges.onNameChange(
-							event.target.value.trim().toLowerCase()
-						);
-					}}
-					value={values.name}
-				/>
+						onChange={handleSubdirectoryInputChange}
+						value={formik.values.pendingSubdirectory}
+						onKeyDown={handleSubdirectoryInputKeyDown}
+					/>
+				</Grid>
 			</Grid>
-			<Grid xs={6}>
-				<TextField
-					id="create-collection-stepper-1-description"
-					sx={{ width: '100%' }}
-					label="Description"
-					required={false}
-					variant="outlined"
-					onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-						setValues({
-							...values,
-							description: event.target.value
-						});
-						controller?.onChanges.onDescriptionChange(
-							event.target.value
-						);
-					}}
-					value={values.description}
-				/>
-			</Grid>
-
-			<Grid xs={12}>
-				<TextField
-					sx={{ width: '100%' }}
-					id="create-collection-stepper-1-subdirectory"
-					label="Subdirectory"
-					required={false}
-					variant="outlined"
-					helperText={
-						<Tooltip
-							title={`${
-								ApiServiceConfig.instance().baseUrl
-							}/collections/${
-								values.subdirectory
-							}${values.name.toLocaleLowerCase()}_[id]`}
-						>
-							<Typography
-								sx={{
-									maxWidth: '75%',
-									overflow: 'hidden',
-									textOverflow: 'ellipsis',
-									whiteSpace: 'nowrap',
-									direction: 'rtl', // Right-to-left text direction
-									textAlign: 'left' // Align text to the left (within RTL)
-								}}
-							>{`${
-								ApiServiceConfig.instance().baseUrl
-							}/collections/${
-								values.subdirectory
-							}${values.name.toLocaleLowerCase()}_[id]`}</Typography>
-						</Tooltip>
-					}
-					onChange={handleSubdirectoryChange}
-					value={pendingSubdirectory}
-					onKeyDown={handleKeyDown}
-				/>
-			</Grid>
-		</Grid>
+			<DebugFormik formik={formik} />
+		</>
 	);
 };
 

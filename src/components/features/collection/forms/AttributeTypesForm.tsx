@@ -8,9 +8,7 @@ import {
 } from '../../../../models/share/collection/CollectionBaseSchema';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
-	MediaContentTypes,
 	MediaTypes,
-	TextContentTypes,
 	TextTypes
 } from '../../../../models/share/collection/BaseSchema';
 import {
@@ -24,27 +22,9 @@ import {
 	TextField,
 	Typography
 } from '@mui/material';
-import {
-	AttributeSettingTypes,
-	TextTypeSetting,
-	SupportedAdvancedSettingTypes,
-	SupportedAdvancedSettings,
-	TypeSetting,
-	MediaTypeSetting,
-	PostTypeSetting,
-	PostsTypeSetting
-} from '../../../../models/share/collection/AttributeTypeSettings';
-import Validator from '../../../../utils/Validator';
-import {
-	AdvancedSettingFormControlProps,
-	MediaTypeSettingControlProps,
-	MediaTypeSettingFormControl,
-	PostTypeSettingControlProps,
-	PostTypeSettingsFormControl,
-	PostsTypeSettingsFormControl,
-	TextTypeSettingControlProps,
-	TextTypeSettingsFormControl
-} from '../CollectionStepper';
+import { SupportedAdvancedSettings } from '../../../../models/share/collection/AttributeTypeSettings';
+import { useFormik } from 'formik';
+import DebugFormik from '../../../debug/DebugFormik';
 
 interface TabPanelProps {
 	children?: React.ReactNode;
@@ -74,286 +54,106 @@ function a11yProps(index: number) {
 		'aria-controls': `simple-tabpanel-${index}`
 	};
 }
-// included all the props for the form controller, can be safely convert
-interface FormControllerProps {
-	values: {
-		name: string;
-		subtype: TextContentTypes | MediaContentTypes | '';
-		maxLength: number;
-		minLength: number;
-		maxSize: number;
-		minSize: number;
-		comment: boolean;
-		reaction: boolean;
-	};
-	advancedSettingCtrl: AdvancedSettingFormControlProps;
-	onChanges: {
-		onNameChange: (name: string) => void;
-		onSubtypeChange: (
-			subtype: TextContentTypes | MediaContentTypes | ''
-		) => void;
-		onMaxLengthChange: (maxLength: number) => void;
-		onMinLengthChange: (minLength: number) => void;
-		onMaxSizeChange: (maxSize: number) => void;
-		onMinSizeChange: (minSize: number) => void;
-		onCommentChange: (comment: boolean) => void;
-		onReactionChange: (reaction: boolean) => void;
-	};
+
+class AttributeBaseSettings {
+	attributeName: string = '';
+	type: SupportedAttributeTypes = SupportedAttributes.text;
+	subType: TextTypes | MediaTypes = TextTypes.short_text;
 }
-// determine which controller to use
-const initFormController = (
-	props: FormControllerProps,
-	type?: SupportedAttributeTypes,
-	controller?:
-		| TextTypeSettingsFormControl
-		| MediaTypeSettingFormControl
-		| PostTypeSettingsFormControl
-		| PostsTypeSettingsFormControl
-) => {
-	if (controller === undefined) {
-		switch (type) {
-			case 'text':
-				return new TextTypeSettingsFormControl(
-					props as TextTypeSettingControlProps
-				);
-			case 'media':
-				return new MediaTypeSettingFormControl(
-					props as MediaTypeSettingControlProps
-				);
-			case 'post':
-				return new PostTypeSettingsFormControl(
-					props as PostTypeSettingControlProps
-				);
-			default:
-				return new TextTypeSettingsFormControl(
-					props as TextTypeSettingControlProps
-				);
-		}
-	}
 
-	return controller;
-};
+// included all the advanced settings
+class AttributeAdvancedSettings {
+	required: boolean = false;
+	unique: boolean = false;
+	private: boolean = false;
+	maxLength: number = 0;
+	minLength: number = 0;
+	maxSize: number = 0;
+	minSize: number = 0;
+	comment: boolean = false;
+	reaction: boolean = false;
+}
 
-const initSubType = (type?: SupportedAttributeTypes) => {
-	switch (type) {
-		case 'text':
-			return TextTypes.short_text;
-		case 'media':
-			return MediaTypes.image;
-		default:
-			return '';
-	}
-};
+interface AttributeAdvancedSettingsProps {
+	required?: boolean;
+	unique?: boolean;
+	maxLength?: boolean;
+	minLength?: boolean;
+	maxSize?: boolean;
+	minSize?: boolean;
+}
+
+export class AttributeInfoFormValues {
+	baseSettings: AttributeBaseSettings = new AttributeBaseSettings();
+	advancedSettings: AttributeAdvancedSettings =
+		new AttributeAdvancedSettings();
+}
 
 export const AttributeTypesForm = ({
 	onSubmit,
-	controller,
+	onValuesChange,
+	initialValues,
 	type,
 	attributeId,
 	submitButtonLabel
 }: {
-	onSubmit?: (settings: TypeSetting, attributeId?: string) => void;
-	controller?:
-		| TextTypeSettingsFormControl
-		| MediaTypeSettingFormControl
-		| PostTypeSettingsFormControl
-		| PostsTypeSettingsFormControl;
+	onSubmit?: (values: AttributeInfoFormValues) => void;
+	onValuesChange?: (values: AttributeInfoFormValues) => void;
+	initialValues?: AttributeInfoFormValues;
 	attributeId?: string;
 	type?: SupportedAttributeTypes;
 	submitButtonLabel?: string;
 }) => {
-	// default values hook
-	const [name, setName] = React.useState(controller?.name ?? '');
-	const [subtype, setSubtype] = React.useState<
-		TextContentTypes | MediaContentTypes | ''
-	>(initSubType(type));
-	const [advancedSettingFlag, setAdvancedSettingFlag] = React.useState(
-		controller?.settingValue ?? 0
-	);
-	const [maxLength, setMaxLength] = React.useState(0);
-	const [minLength, setMinLength] = React.useState(0);
-
-	const [maxSize, setMaxSize] = React.useState(0);
-	const [minSize, setMinSize] = React.useState(0);
-
-	const [comment, setComment] = React.useState(true);
-	const [reaction, setReaction] = React.useState(true);
-
-	const [ctrl] = React.useState<
-		| TextTypeSettingsFormControl
-		| MediaTypeSettingFormControl
-		| PostTypeSettingsFormControl
-		| PostsTypeSettingsFormControl
-	>(
-		initFormController(
-			{
-				values: {
-					name,
-					subtype,
-					maxLength,
-					minLength,
-					maxSize,
-					minSize,
-					comment,
-					reaction
-				},
-				advancedSettingCtrl: {
-					value: advancedSettingFlag,
-					onValueChange: setAdvancedSettingFlag
-				},
-				onChanges: {
-					onNameChange: setName,
-					onSubtypeChange: setSubtype,
-					onMaxLengthChange: setMaxLength,
-					onMinLengthChange: setMinLength,
-					onMaxSizeChange: setMaxSize,
-					onMinSizeChange: setMinSize,
-					onCommentChange: setComment,
-					onReactionChange: setReaction
-				}
-			},
-			type,
-			controller
-		)
-	);
+	const formik = useFormik({
+		initialValues: initialValues ?? new AttributeInfoFormValues(),
+		onSubmit: (values) => {}
+	});
 
 	const [submitButtonEnable, setSubmitButtonEnable] = React.useState(false);
 
 	// required, unique, maxLength, minLength
 	const [tabValue, setTabValue] = React.useState(0);
-	// const [fileType, setFileType] = React.useState<
-	// 	ImageExtensions | AudioExtensions | VideoExtensions | MediaExtensions
-	// >();
-
-	const [setting, setSetting] = React.useState<AttributeSettingTypes>();
 
 	React.useEffect(() => {
 		switch (type) {
 			case SupportedAttributes.text:
-				setSetting(new TextTypeSetting('short_text'));
+				formik.setFieldValue('baseSettings.type', 'text');
+				formik.setFieldValue('baseSettings.subType', 'short_text');
 				break;
 			case SupportedAttributes.media:
-				setSetting(new MediaTypeSetting('image'));
+				formik.setFieldValue('baseSettings.type', 'media');
+				formik.setFieldValue('baseSettings.subType', 'image');
 				break;
 			case SupportedAttributes.post:
-				setSetting(new PostTypeSetting());
+				formik.setFieldValue('baseSettings.type', 'post');
 				break;
 			case SupportedAttributes.posts:
-				setSetting(new PostsTypeSetting());
+				formik.setFieldValue('baseSettings.type', 'posts');
 				break;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [type]);
 
-	const handleSubmit = () => {
-		if (setting) {
-			if (setting instanceof TextTypeSetting) {
-				setting.isRequire = !!(advancedSettingFlag & 1);
-				setting.isUnique = !!(advancedSettingFlag & 2);
-				setting.textSubType = subtype as TextContentTypes;
-				setting.name = name;
+	// React.useEffect(() => {
+	// 	if (onValuesChange) {
+	// 		onValuesChange(formik.values);
+	// 	}
+	// }, [formik.values, onValuesChange]);
 
-				ctrl.onNameChange(name);
-				(ctrl as TextTypeSettingsFormControl).onSubtypeChange(
-					subtype as TextContentTypes
-				);
-				ctrl.onSettingValueChange(advancedSettingFlag);
-			}
-
-			if (setting instanceof MediaTypeSetting) {
-				setting.isRequire = !!(advancedSettingFlag & 1);
-				setting.isUnique = !!(advancedSettingFlag & 2);
-				setting.mediaSubType = subtype as MediaContentTypes;
-				setting.name = name;
-
-				ctrl.onNameChange(name);
-				(ctrl as MediaTypeSettingFormControl).onSubtypeChange(
-					subtype as MediaContentTypes
-				);
-				ctrl.onSettingValueChange(advancedSettingFlag);
-			}
-
-			if (setting instanceof PostTypeSetting) {
-				setting.comment = comment;
-				setting.reaction = reaction;
-				setting.name = name;
-
-				ctrl.onNameChange(name);
-				(ctrl as PostTypeSettingsFormControl).onCommentChange(comment);
-				(ctrl as PostTypeSettingsFormControl).onReactionChange(
-					reaction
-				);
-			}
-
-			if (setting instanceof PostsTypeSetting) {
-				setting.name = name;
-				ctrl.onNameChange(name);
-			}
-
-			onSubmit?.(setting as TypeSetting, attributeId);
-		}
-	};
-	const handleSubTypeChange = (
-		_event: React.ChangeEvent<HTMLInputElement>,
-		value: string
-	) => {
-		switch (value) {
-			case TextTypes.short_text:
-			case TextTypes.long_text:
-			case TextTypes.reach_text:
-				(ctrl as TextTypeSettingsFormControl).onSubtypeChange(value);
-				break;
-			case MediaTypes.image:
-			case MediaTypes.audio:
-			case MediaTypes.video:
-				(ctrl as MediaTypeSettingFormControl).onSubtypeChange(value);
-				break;
-			case 'code':
-				break;
+	const handleSubmit = (values: AttributeInfoFormValues) => {
+		if (onSubmit) {
+			onSubmit(values);
 		}
 	};
 
-	const handleTypeNameChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const value = event.target.value;
-		const isValid = Validator.isValidName(value);
-		setSubmitButtonEnable(isValid);
-		setName(value);
-		ctrl.onNameChange(value);
-		controller?.onNameChange(value);
-	};
-
-	const handleAdvancedSettingsChange = (
-		advancedSettingTypes: SupportedAdvancedSettingTypes,
-		value: boolean
-	) => {
-		const prev = advancedSettingFlag;
-		switch (advancedSettingTypes) {
-			case SupportedAdvancedSettings.require:
-				ctrl.onSettingValueChange(value ? prev | 1 : prev & ~1);
-				setAdvancedSettingFlag(value ? prev | 1 : prev & ~1);
-				break;
-			case SupportedAdvancedSettings.unique:
-				ctrl.onSettingValueChange(value ? prev | 2 : prev & ~2);
-				setAdvancedSettingFlag(value ? prev | 2 : prev & ~2);
-				break;
-			case SupportedAdvancedSettings.max_length:
-				ctrl.onSettingValueChange(value ? prev | 4 : prev & ~4);
-				setAdvancedSettingFlag(value ? prev | 4 : prev & ~4);
-				break;
-			case SupportedAdvancedSettings.min_length:
-				ctrl.onSettingValueChange(value ? prev | 8 : prev & ~8);
-				setAdvancedSettingFlag(value ? prev | 8 : prev & ~8);
-				break;
-		}
-	};
 	const textSubTypeOptions = () => {
 		return (
 			<RadioGroup
 				row
 				aria-labelledby="text-type-radio-buttons-group-label"
-				onChange={handleSubTypeChange}
-				value={(ctrl as TextTypeSettingsFormControl).subtype}
+				onChange={formik.handleChange('baseSettings.subType')}
+				onBlur={formik.handleBlur}
+				value={formik.values.baseSettings.subType}
 				name="text-type-radio-buttons-group"
 			>
 				<FormControlLabel
@@ -401,8 +201,8 @@ export const AttributeTypesForm = ({
 			<RadioGroup
 				row
 				aria-labelledby="media-type-radio-buttons-group-label"
-				onChange={handleSubTypeChange}
-				value={(ctrl as MediaTypeSettingFormControl).subtype}
+				onChange={formik.handleChange('baseSettings.subType')}
+				value={formik.values.baseSettings.subType}
 				name="media-type-radio-buttons-group"
 			>
 				<FormControlLabel
@@ -444,8 +244,139 @@ export const AttributeTypesForm = ({
 			</RadioGroup>
 		);
 	};
-	const getSubTypeOptions = (type: SupportedAttributeTypes) => {
-		switch (type) {
+
+	const postAdditionalBaseOptions = () => {
+		return (
+			<FormGroup>
+				<FormControlLabel
+					value="comment"
+					name="comment"
+					control={
+						<Checkbox
+							checked={formik.values.advancedSettings.comment}
+							onChange={formik.handleChange}
+						/>
+					}
+					label="Comment"
+				/>
+				<FormControlLabel
+					value="reaction"
+					name="reaction"
+					control={
+						<Checkbox
+							checked={formik.values.advancedSettings.reaction}
+							onChange={formik.handleChange}
+						/>
+					}
+					label="Reaction"
+				/>
+			</FormGroup>
+		);
+	};
+
+	const advancedSettingBase = () => {
+		return (
+			<Box>
+				<FormGroup>
+					<Grid container spacing={2}>
+						<Grid xs={6}>
+							<FormControlLabel
+								value={SupportedAdvancedSettings.require}
+								label="Required"
+								name="required"
+								control={
+									<Checkbox
+										checked={
+											formik.values.advancedSettings
+												.required
+										}
+										onChange={formik.handleChange(
+											'advancedSettings.required'
+										)}
+									/>
+								}
+							/>
+						</Grid>
+
+						<Grid xs={6}>
+							<FormControlLabel
+								value={SupportedAdvancedSettings.unique}
+								control={
+									<Checkbox
+										checked={
+											formik.values.advancedSettings
+												.unique
+										}
+										onChange={formik.handleChange(
+											'advancedSettings.unique'
+										)}
+									/>
+								}
+								label="Unique"
+							/>
+						</Grid>
+
+						<Grid xs={6}>
+							<FormControlLabel
+								value={SupportedAdvancedSettings.max_length}
+								control={
+									<>
+										<Checkbox
+											checked={
+												formik.values.advancedSettings
+													.maxLength !== 0
+											}
+										/>
+										<TextField
+											type="number"
+											value={
+												formik.values.advancedSettings
+													.maxLength
+											}
+											onChange={formik.handleChange(
+												'advancedSettings.maxLength'
+											)}
+										/>
+									</>
+								}
+								label="Max length"
+							/>
+						</Grid>
+
+						<Grid xs={6}>
+							<FormControlLabel
+								value={SupportedAdvancedSettings.min_length}
+								control={
+									<>
+										<Checkbox
+											checked={
+												formik.values.advancedSettings
+													.minLength !== 0
+											}
+										/>
+										<TextField
+											type="number"
+											value={
+												formik.values.advancedSettings
+													.minLength
+											}
+											onChange={formik.handleChange(
+												'advancedSettings.minLength'
+											)}
+										/>
+									</>
+								}
+								label="Min length"
+							/>
+						</Grid>
+					</Grid>
+				</FormGroup>
+			</Box>
+		);
+	};
+
+	const SubTypeOptions = (props: { type: SupportedAttributeTypes }) => {
+		switch (props.type) {
 			case SupportedAttributes.text:
 				return textSubTypeOptions();
 			case SupportedAttributes.media:
@@ -453,41 +384,12 @@ export const AttributeTypesForm = ({
 		}
 	};
 
-	const getAdditionalBaseOptions = (type: SupportedAttributeTypes) => {
-		switch (type) {
+	const AdditionalBaseOptions = (props: {
+		type: SupportedAttributeTypes;
+	}) => {
+		switch (props.type) {
 			case 'post':
-				return (
-					<FormGroup>
-						<FormControlLabel
-							value="comment"
-							control={
-								<Checkbox
-									checked={comment}
-									onChange={(e) => {
-										(
-											ctrl as PostTypeSettingsFormControl
-										).onCommentChange(e.target.checked);
-									}}
-								/>
-							}
-							label="Comment"
-						/>
-						<FormControlLabel
-							value="reaction"
-							control={
-								<Checkbox
-									checked={reaction}
-									onChange={(e) => {
-										(
-											ctrl as PostTypeSettingsFormControl
-										).onReactionChange(e.target.checked);
-									}}
-								/>
-							}
-							label="Reaction"
-						/>
-					</FormGroup>
-				);
+				return postAdditionalBaseOptions();
 		}
 	};
 
@@ -498,147 +400,29 @@ export const AttributeTypesForm = ({
 					<FormControl>
 						<TextField
 							id="type-name-input"
-							label="Name"
+							label="Attribute name"
+							name="attributeName"
 							required={true}
 							helperText="No spaces allowed"
-							value={name}
+							value={formik.values.baseSettings.attributeName}
 							variant="outlined"
-							onChange={handleTypeNameChange}
+							onChange={formik.handleChange(
+								'baseSettings.attributeName'
+							)}
 						/>
-						{getSubTypeOptions(type)}
-						{getAdditionalBaseOptions(type)}
+						<SubTypeOptions type={type} />
+						<AdditionalBaseOptions type={type} />
 					</FormControl>
 				</Box>
 			);
 		}
 	};
 
-	const AdvancedSettings = ({
-		required,
-		unique,
-		maxLength,
-		minLength
-	}: {
-		required?: boolean;
-		unique?: boolean;
-		maxLength?: boolean;
-		minLength?: boolean;
-	}) => {
+	const AdvancedSettings = (props: AttributeAdvancedSettingsProps) => {
 		switch (type) {
 			case SupportedAttributes.text:
 			case SupportedAttributes.media:
-				return (
-					<Box>
-						<FormGroup>
-							<Grid container spacing={2}>
-								{required !== undefined && (
-									<Grid xs={6}>
-										<FormControlLabel
-											value={
-												SupportedAdvancedSettings.require
-											}
-											control={
-												<Checkbox
-													checked={
-														!!(
-															advancedSettingFlag &
-															1
-														)
-													}
-													onChange={(e) => {
-														handleAdvancedSettingsChange(
-															SupportedAdvancedSettings.require,
-															e.target.checked
-														);
-													}}
-												/>
-											}
-											label="Required"
-										/>
-									</Grid>
-								)}
-								{unique !== undefined && (
-									<Grid xs={6}>
-										<FormControlLabel
-											value={
-												SupportedAdvancedSettings.unique
-											}
-											control={
-												<Checkbox
-													checked={
-														!!(
-															advancedSettingFlag &
-															2
-														)
-													}
-													onChange={(e) => {
-														handleAdvancedSettingsChange(
-															SupportedAdvancedSettings.unique,
-															e.target.checked
-														);
-													}}
-												/>
-											}
-											label="Unique"
-										/>
-									</Grid>
-								)}
-								{maxLength !== undefined && (
-									<Grid xs={6}>
-										<FormControlLabel
-											value={
-												SupportedAdvancedSettings.max_length
-											}
-											control={
-												<Checkbox
-													checked={
-														!!(
-															advancedSettingFlag &
-															4
-														)
-													}
-													onChange={(e) => {
-														handleAdvancedSettingsChange(
-															SupportedAdvancedSettings.max_length,
-															e.target.checked
-														);
-													}}
-												/>
-											}
-											label="Max length"
-										/>
-									</Grid>
-								)}
-								{minLength !== undefined && (
-									<Grid xs={6}>
-										<FormControlLabel
-											value={
-												SupportedAdvancedSettings.min_length
-											}
-											control={
-												<Checkbox
-													checked={
-														!!(
-															advancedSettingFlag &
-															8
-														)
-													}
-													onChange={(e) => {
-														handleAdvancedSettingsChange(
-															SupportedAdvancedSettings.min_length,
-															e.target.checked
-														);
-													}}
-												/>
-											}
-											label="Min length"
-										/>
-									</Grid>
-								)}
-							</Grid>
-						</FormGroup>
-					</Box>
-				);
+				return advancedSettingBase();
 		}
 	};
 
@@ -651,40 +435,44 @@ export const AttributeTypesForm = ({
 		};
 
 		return (
-			<Box sx={{ width: '100%' }}>
-				<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-					<Tabs
-						value={tabValue}
-						onChange={handleChange}
-						aria-label="setting tabs"
-					>
-						<Tab label="BASE SETTINGS" {...a11yProps(0)} />
-						<Tab label="ADVANCED SETTINGS" {...a11yProps(1)} />
-					</Tabs>
-				</Box>
-				<SettingsTabPanel value={tabValue} index={0}>
-					{BaseSettings()}
-				</SettingsTabPanel>
-				<SettingsTabPanel value={tabValue} index={1}>
-					<AdvancedSettings
-						required={false}
-						unique={false}
-						maxLength={false}
-						minLength={false}
-					/>
-				</SettingsTabPanel>
-				{onSubmit && (
+			<>
+				<Box sx={{ width: '100%' }}>
+					<Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+						<Tabs
+							value={tabValue}
+							onChange={handleChange}
+							aria-label="setting tabs"
+						>
+							<Tab label="BASE SETTINGS" {...a11yProps(0)} />
+							<Tab label="ADVANCED SETTINGS" {...a11yProps(1)} />
+						</Tabs>
+					</Box>
+					<SettingsTabPanel value={tabValue} index={0}>
+						{BaseSettings()}
+					</SettingsTabPanel>
+					<SettingsTabPanel value={tabValue} index={1}>
+						<AdvancedSettings
+							required={false}
+							unique={false}
+							maxLength={false}
+							minLength={false}
+						/>
+					</SettingsTabPanel>
+
 					<Button
-						onClick={handleSubmit}
+						onClick={() => handleSubmit(formik.values)}
 						variant="contained"
-						disabled={!submitButtonEnable}
+						disabled={
+							formik.values.baseSettings.attributeName === ''
+						}
 					>
 						{submitButtonLabel ?? 'Submit'}
 					</Button>
-				)}
-			</Box>
+				</Box>
+				<DebugFormik formik={formik} />
+			</>
 		);
 	};
 
-	return <>{ctrl ? <Box>{SettingTabs()}</Box> : null}</>;
+	return <Box>{SettingTabs()}</Box>;
 };

@@ -79,11 +79,11 @@ export class TypeSetting {
 	public type: string = '';
 	public isRequire: boolean = false;
 	public isUnique: boolean = false;
-	public private: boolean = false;
+	public isPrivate: boolean = false;
 }
 
 export class TextTypeSetting extends TypeSetting {
-	public textSubType: TextContentTypes;
+	public subType: TextContentTypes;
 	public maxLength: number;
 	public minLength: number;
 
@@ -91,7 +91,7 @@ export class TextTypeSetting extends TypeSetting {
 		super();
 		this.type = 'text';
 		this.minLength = 0;
-		this.textSubType = value;
+		this.subType = value;
 		switch (value) {
 			case 'short_text':
 				this.maxLength = 255;
@@ -125,7 +125,7 @@ export class PostsTypeSetting extends TypeSetting {
 
 export class MediaTypeSetting extends TypeSetting {
 	// allowed extension
-	public mediaSubType;
+	public subType;
 	public mediaExtension: MediaExtensions | ''; // set when upload file
 	public maxSize!: number;
 	public minSize: number;
@@ -138,7 +138,7 @@ export class MediaTypeSetting extends TypeSetting {
 		this.mediaExtension = '';
 		this.minSize = 0;
 		this.minLength = 0;
-		this.mediaSubType = value;
+		this.subType = value;
 
 		switch (value) {
 			case 'image':

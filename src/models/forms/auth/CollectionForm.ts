@@ -1,6 +1,6 @@
 import { CollectionAttribute } from '../../share/collection/CollectionAttributes';
 interface CollectionFormProps {
-	kind: 'collection';
+	kind: 'collection' | 'post';
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
 }
@@ -12,7 +12,7 @@ export interface CollectionInfo {
 }
 
 export class CollectionForm implements CollectionFormProps {
-	kind: 'collection';
+	kind: 'collection' | 'post';
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
 
@@ -20,5 +20,17 @@ export class CollectionForm implements CollectionFormProps {
 		this.kind = 'collection';
 		this.info = { name: '', description: '', subdirectory: '' };
 		this.attributes = [];
+	}
+
+	public setCollectionInfo({
+		name,
+		description,
+		subdirectory
+	}: CollectionInfo) {
+		this.info = { name, description, subdirectory };
+	}
+
+	public addAttribute(attribute: CollectionAttribute) {
+		this.attributes.push(attribute);
 	}
 }
