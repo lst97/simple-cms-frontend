@@ -140,17 +140,18 @@ export const CreateCollectionStepper = () => {
 					case 'media':
 					case 'post':
 						return (
-							<AttributeTypesForm
-								onSubmit={(values: AttributeInfoFormValues) => {
-									formik.setFieldValue('attributes', [
-										...formik.values.attributes,
-										values
-									]);
-									setSelectedAttributeType(null);
-								}}
-								type={selectedAttributeType}
-								submitButtonLabel="Add another attribute"
-							/>
+							<></>
+							// <AttributeTypesForm
+							// 	onSubmit={(values: AttributeInfoFormValues) => {
+							// 		formik.setFieldValue('attributes', [
+							// 			...formik.values.attributes,
+							// 			values
+							// 		]);
+							// 		setSelectedAttributeType(null);
+							// 	}}
+							// 	type={selectedAttributeType}
+							// 	submitButtonLabel="Add another attribute"
+							// />
 						);
 					case 'posts':
 						return (

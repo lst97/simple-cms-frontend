@@ -1,17 +1,7 @@
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { CreateCollectionStepper } from './CollectionStepper';
-import { AttributeTypesForm } from './forms/AttributeTypesForm';
-import { getCollectionAdvancedSettingFlag } from '../../../utils/Flags';
-import { useContext, useEffect, useState } from 'react';
-import {
-	MediaTypeSettingDbModel,
-	TextTypeSettingDbModel,
-	TypeSetting
-} from '../../../models/share/collection/AttributeTypeSettings';
-import {
-	MediaContentTypes,
-	TextContentTypes
-} from '../../../models/share/collection/BaseSchema';
+import { useContext } from 'react';
+import { TypeSetting } from '../../../models/share/collection/AttributeTypeSettings';
 import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
 import { CollectionApiService } from '../../../services/ApiService';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
@@ -40,42 +30,6 @@ export const CreateCollectionDialog = (props: DialogBaseProps) => {
 export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 	const { onClose, open, attribute, collection } = props;
 
-	const [name, setName] = useState(attribute.setting.name ?? '');
-	const [subtype, setSubtype] = useState<
-		TextContentTypes | MediaContentTypes
-	>(
-		attribute.setting.type === 'text'
-			? (attribute.setting as TextTypeSettingDbModel).textSubType
-			: (attribute.setting as MediaTypeSettingDbModel).mediaSubType
-	);
-	const [advancedSettingFlag, setAdvancedSettingFlag] = useState(
-		getCollectionAdvancedSettingFlag({
-			required: attribute.setting.isRequire,
-			unique: attribute.setting.isUnique,
-			private: attribute.setting.private
-		})
-	);
-
-	// not current
-	const [maxLength, setMaxLength] = useState(0);
-	const [minLength, setMinLength] = useState(0);
-
-	useEffect(() => {
-		setName(attribute.setting.name);
-		setSubtype(
-			attribute.setting.type === 'text'
-				? (attribute.setting as TextTypeSettingDbModel).textSubType
-				: (attribute.setting as MediaTypeSettingDbModel).mediaSubType
-		);
-		setAdvancedSettingFlag(
-			getCollectionAdvancedSettingFlag({
-				required: attribute.setting.isRequire,
-				unique: attribute.setting.isUnique,
-				private: attribute.setting.private
-			})
-		);
-	}, [attribute]);
-
 	const { collections, setCollections } = useContext(CollectionContext);
 
 	const handleEditAttributeDialogClose = () => {
@@ -88,19 +42,6 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 		);
 
 		if (!attribute) return;
-
-		// collection.attributes = collection.attributes.map((attr) => {
-		// 	if (attr._id === attributeId) {
-		// 		return {
-		// 			...attr,
-		// 			setting: {
-		// 				...attr.setting,
-		// 				_id: attributeId
-		// 			}
-		// 		};
-		// 	}
-		// 	return attr;
-		// });
 
 		CollectionApiService.updateCollectionAttribute(
 			collection.slug,
