@@ -75,15 +75,6 @@ const a11yProps = (index: number) => {
 	};
 };
 
-// interface AttributeAdvancedSettingsProps {
-// 	required?: boolean;
-// 	unique?: boolean;
-// 	maxLength?: boolean;
-// 	minLength?: boolean;
-// 	maxSize?: boolean;
-// 	minSize?: boolean;
-// }
-
 export class AttributeInfoFormValues {
 	baseSettings: AttributeBaseSettings = new AttributeBaseSettings();
 	advancedSettings: AttributeAdvancedSettings =
@@ -411,12 +402,10 @@ const AdvancedSettings = (props: {
 
 const SettingTabs = ({
 	children,
-	formik,
-	submitButtonLabel
+	formik
 }: {
 	children: ReactNode[];
 	formik: FormikProps<AttributeInfoFormValues>;
-	submitButtonLabel?: string;
 }) => {
 	// required, unique, maxLength, minLength
 	const [tabValue, setTabValue] = React.useState(0);
@@ -458,35 +447,29 @@ const SettingTabs = ({
 				<SettingsTabPanel value={tabValue} index={1}>
 					{advancedSettings}
 				</SettingsTabPanel>
-				<Button
-					onClick={() => formik.handleSubmit()}
-					variant="contained"
-					disabled={formik.values.baseSettings.attributeName === ''}
-				>
-					{submitButtonLabel ?? 'Submit'}
-				</Button>
 			</Box>
 			<DebugFormik formik={formik} />
 		</>
 	);
 };
 
-export const AttributeTypesForm = ({
-	initialValues,
-	type
-}: {
+export const AttributeTypesForm = (props: {
+	type: SupportedAttributeTypes;
+	submitLabel: string;
 	initialValues?: AttributeInfoFormValues;
-	type?: SupportedAttributeTypes;
+	onSubmit?: (values: AttributeInfoFormValues) => void;
 }) => {
 	const formik = useFormik({
-		initialValues: initialValues ?? new AttributeInfoFormValues(),
-		onSubmit: () => {}
+		initialValues: props.initialValues ?? new AttributeInfoFormValues(),
+		onSubmit: (values: AttributeInfoFormValues) => {
+			if (props.onSubmit) {
+				props.onSubmit(values);
+			}
+		}
 	});
 
-	// const [submitButtonEnable, setSubmitButtonEnable] = React.useState(false);
-
 	React.useEffect(() => {
-		switch (type) {
+		switch (props.type) {
 			case SupportedAttributes.text:
 				formik.setFieldValue('baseSettings.type', 'text');
 				formik.setFieldValue('baseSettings.subType', 'short_text');
@@ -502,14 +485,20 @@ export const AttributeTypesForm = ({
 				formik.setFieldValue('baseSettings.type', 'posts');
 				break;
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [type]);
+	}, [props.type]);
 
 	return (
 		<Box>
 			<SettingTabs formik={formik}>
 				<BaseSettings />
 				<AdvancedSettings />
+				<Button
+					onClick={() => formik.handleSubmit()}
+					variant="contained"
+					disabled={formik.values.baseSettings.attributeName === ''}
+				>
+					{props.submitLabel ?? 'Submit'}
+				</Button>
 			</SettingTabs>
 		</Box>
 	);
