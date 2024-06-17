@@ -50,7 +50,7 @@ export interface TypeSettingDbModel {
 export interface TextTypeSettingDbModel extends TypeSettingDbModel {
 	maxLength: number;
 	minLength: number;
-	textSubType: TextContentTypes;
+	subType: TextContentTypes;
 }
 
 export interface MediaTypeSettingDbModel extends TypeSettingDbModel {
@@ -58,7 +58,7 @@ export interface MediaTypeSettingDbModel extends TypeSettingDbModel {
 	minLength: number;
 	maxSize: number;
 	minSize: number;
-	mediaSubType: MediaContentTypes;
+	subType: MediaContentTypes;
 }
 
 export type AttributeSettingTypes =

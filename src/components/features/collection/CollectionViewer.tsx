@@ -139,11 +139,9 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const getSubTypeName = (attribute: CollectionAttributeDbModel) => {
 		switch (attribute.setting.type) {
 			case SupportedAttributes.text:
-				return (attribute.setting as TextTypeSettingDbModel)
-					.textSubType;
+				return (attribute.setting as TextTypeSettingDbModel).subType;
 			case SupportedAttributes.media:
-				return (attribute.setting as MediaTypeSettingDbModel)
-					.mediaSubType;
+				return (attribute.setting as MediaTypeSettingDbModel).subType;
 			default:
 				return null;
 		}
