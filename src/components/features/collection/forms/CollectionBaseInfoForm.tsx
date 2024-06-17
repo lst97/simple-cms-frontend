@@ -10,7 +10,7 @@ export class CollectionBaseInfoFormControl {}
 export class CollectionBaseInfoFormValues {
 	collectionName: string = '';
 	collectionDescription: string = '';
-	collectionSubdirectory: string = '/';
+	collectionSubdirectory: string = '';
 
 	// subdirectory input textfield value
 	pendingSubdirectory: string = '';
@@ -29,7 +29,11 @@ const CollectionBaseInfoForm = (props: {
 	const extractSlug = (subdirectory: string) => {
 		const parts = subdirectory.slice(0, -1).split('/');
 		const slug = parts.pop();
-		const newSubdirectory = parts.join('/').concat('/');
+		let newSubdirectory = parts.join('/').concat('/');
+
+		if (newSubdirectory === '/') {
+			newSubdirectory = '';
+		}
 
 		return { slug, newSubdirectory };
 	};
