@@ -16,7 +16,9 @@ import {
 	AttributeSettingTypes,
 	MediaTypeSettingDbModel,
 	TextTypeSetting,
-	TextTypeSettingDbModel
+	TextTypeSettingDbModel,
+	TypeSetting,
+	TypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
 import { useContext, useEffect, useState } from 'react';
 import { EditAttributeDialog } from './CollectionComponents';
@@ -33,7 +35,10 @@ import {
 } from '../../../services/ApiService';
 import { BaseContent } from '../../../models/share/collection/AttributeContents';
 import AttributeTypesGrid from './AttributeTypesGrid';
-import { AttributeTypesForm } from './forms/AttributeTypesForm';
+import {
+	AttributeInfoFormValues,
+	AttributeTypesForm
+} from './forms/AttributeTypesForm';
 
 import SettingsIcon from '@mui/icons-material/Settings';
 import { ICollectionEndpoint } from '../../../models/share/endpoint/Endpoint';
@@ -57,16 +62,14 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 		setSelectedAttribute(attribute);
 	};
 
-	const handleAddAttribute = async (settings: AttributeSettingTypes) => {
+	const handleAddAttribute = async (settings: AttributeInfoFormValues) => {
 		if (!pendingAddAttributeType) return;
 
 		if (pendingAddAttributeType === SupportedAttributes.text) {
-			const newAttribute = new CollectionAttribute(
-				new TextTypeSetting('short_text'),
-				new BaseContent()
-			);
-
-			newAttribute.setting = settings as TextTypeSetting;
+			const newAttribute = new CollectionAttribute({
+				setting: TextTypeSetting.toTextTypeSetting(settings),
+				content: new BaseContent()
+			});
 
 			const updatedCollection: CollectionDbModel =
 				await CollectionApiService.addCollectionAttribute(
@@ -74,9 +77,12 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 					newAttribute
 				);
 
-			const attributeToAdd = updatedCollection.attributes.find(
-				(a) => a.setting.name === newAttribute.setting.name
-			);
+			const attributeToAdd: CollectionAttributeDbModel | undefined =
+				updatedCollection.attributes.find(
+					(a) =>
+						(a.setting as TypeSettingDbModel).name ===
+						(newAttribute.setting as TextTypeSetting).name
+				) as CollectionAttributeDbModel;
 
 			if (attributeToAdd) {
 				setCollections((prev: CollectionDbModel[]) => {
@@ -163,18 +169,39 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 					</Button>
 				</div>
 			</div>
-			{collection.attributes && collection.attributes.length !== 0 ? (
+			{collection.attributes &&
+			collection.attributes.length !== 0 &&
+			(collection.attributes[0].setting as any).type !== undefined ? (
 				<Stack direction="column" spacing={1}>
 					{collection.attributes.map((attribute) => (
-						<div key={'attribute_' + attribute.setting.name}>
+						<div
+							key={
+								'attribute_' +
+								(attribute.setting as unknown as TypeSetting)
+									.name
+							}
+						>
 							<Stack direction="row" spacing={1}>
 								<div>
 									<Typography variant="h6">
-										Attribute name: {attribute.setting.name}
+										Attribute name:{' '}
+										{
+											(
+												attribute.setting as unknown as TypeSetting
+											).name
+										}
 									</Typography>
 									<Typography variant="subtitle1">
-										Type: {attribute.setting.type},
-										Sub-Type: {getSubTypeName(attribute)}
+										Type:{' '}
+										{
+											(
+												attribute.setting as unknown as TypeSetting
+											).type
+										}
+										, Sub-Type:{' '}
+										{getSubTypeName(
+											attribute as CollectionAttributeDbModel
+										)}
 									</Typography>
 								</div>
 								<div>
@@ -191,7 +218,9 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 											variant="outlined"
 											color="primary"
 											onClick={() => {
-												handleEditAttribute(attribute);
+												handleEditAttribute(
+													attribute as CollectionAttributeDbModel
+												);
 											}}
 										>
 											Edit
@@ -201,7 +230,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 											color="warning"
 											onClick={() => {
 												handlePendingDeleteAttribute(
-													attribute
+													attribute as CollectionAttributeDbModel
 												);
 											}}
 										>
@@ -257,7 +286,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 						<AttributeTypesForm
 							onSubmit={handleAddAttribute}
 							type={pendingAddAttributeType}
-							submitButtonLabel="Submit"
+							submitLabel="Submit"
 						/>
 					) : (
 						<AttributeTypesGrid onClick={onAttributeTypeSelected} />

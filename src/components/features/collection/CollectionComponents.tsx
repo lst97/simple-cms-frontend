@@ -1,12 +1,19 @@
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { CreateCollectionStepper } from './CollectionStepper';
 import { useContext } from 'react';
-import { TypeSetting } from '../../../models/share/collection/AttributeTypeSettings';
+import {
+	TextTypeSetting,
+	TypeSetting
+} from '../../../models/share/collection/AttributeTypeSettings';
 import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
 import { CollectionApiService } from '../../../services/ApiService';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
 import { CollectionContext } from '../../../context/CollectionContext';
 import { DialogBaseProps } from '../../common/dialogs/Dialogs';
+import {
+	AttributeInfoFormValues,
+	AttributeTypesForm
+} from './forms/AttributeTypesForm';
 
 interface EditAttributeDialogProps extends DialogBaseProps {
 	collection: CollectionDbModel;
@@ -36,7 +43,7 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 		onClose();
 	};
 
-	const handleOnSubmit = (setting: TypeSetting, attributeId?: string) => {
+	const handleSubmit = (setting: TypeSetting, attributeId?: string) => {
 		const attribute = collection.attributes.find(
 			(attr) => attr._id === attributeId
 		);
@@ -88,13 +95,21 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 					<DialogTitle>Edit attribute</DialogTitle>
 
 					<DialogContent>
-						{/* <AttributeTypesForm
-							onSubmit={handleOnSubmit}
+						<AttributeTypesForm
+							onSubmit={(values: AttributeInfoFormValues) => {
+								switch (values.baseSettings.type) {
+									case 'text':
+										handleSubmit(
+											TextTypeSetting.toTextTypeSetting(
+												values
+											),
+											attribute._id
+										);
+								}
+							}}
 							type={attribute.setting.type ?? undefined}
-							attributeId={attribute._id}
-							controller={ctrl}
-							submitButtonLabel="Submit"
-						/> */}
+							submitLabel="Submit"
+						/>
 					</DialogContent>
 				</>
 			) : null}

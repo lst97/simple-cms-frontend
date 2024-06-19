@@ -16,14 +16,13 @@ export const AttributesController = ({
 	CollectionApiService.useIndicator(showIndicator);
 
 	const handlePublish = () => {
-		const publishCollection = async () => {
-			await CollectionApiService.updateCollectionAttributes(
-				collections[selectedCollectionIndex].slug,
-				collections[selectedCollectionIndex].attributes
-			);
-		};
-
-		publishCollection();
+		// const publishCollection = async () => {
+		// 	await CollectionApiService.updateCollectionAttributes(
+		// 		collections[selectedCollectionIndex].slug,
+		// 		collections[selectedCollectionIndex].attributes
+		// 	);
+		// };
+		// publishCollection();
 	};
 
 	return (

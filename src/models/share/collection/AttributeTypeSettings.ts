@@ -1,3 +1,4 @@
+import { AttributeInfoFormValues } from '../../../components/features/collection/forms/AttributeTypesForm';
 import {
 	TextSchema,
 	CodeSchema,
@@ -33,11 +34,11 @@ export enum SupportedAdvancedSettingsBit {
 }
 
 export class SupportedAdvancedSettings {
-	static require: SupportedAdvancedSettingTypes = 'require';
-	static unique: SupportedAdvancedSettingTypes = 'unique';
-	static max_length: SupportedAdvancedSettingTypes = 'max_length';
-	static min_length: SupportedAdvancedSettingTypes = 'min_length';
-	static isPrivate: SupportedAdvancedSettingTypes = 'private';
+	static readonly require: SupportedAdvancedSettingTypes = 'require';
+	static readonly unique: SupportedAdvancedSettingTypes = 'unique';
+	static readonly max_length: SupportedAdvancedSettingTypes = 'max_length';
+	static readonly min_length: SupportedAdvancedSettingTypes = 'min_length';
+	static readonly isPrivate: SupportedAdvancedSettingTypes = 'private';
 }
 export interface TypeSettingDbModel {
 	_id: string;
@@ -75,11 +76,31 @@ export type AttributeSettingTypes =
 	| BooleanTypeSetting
 	| DynamicTypeSetting;
 export class TypeSetting {
-	public name: string = '';
-	public type: string = '';
-	public isRequire: boolean = false;
-	public isUnique: boolean = false;
-	public isPrivate: boolean = false;
+	public name: string;
+	public type: string;
+	public isRequire: boolean;
+	public isUnique: boolean;
+	public isPrivate: boolean;
+
+	constructor({
+		name,
+		type,
+		isRequire,
+		isUnique,
+		isPrivate
+	}: {
+		name: string;
+		type: string;
+		isRequire?: boolean;
+		isUnique?: boolean;
+		isPrivate?: boolean;
+	}) {
+		this.name = name;
+		this.type = type;
+		this.isRequire = isRequire ?? false;
+		this.isUnique = isUnique ?? false;
+		this.isPrivate = isPrivate ?? false;
+	}
 }
 
 export class TextTypeSetting extends TypeSetting {
@@ -87,20 +108,143 @@ export class TextTypeSetting extends TypeSetting {
 	public maxLength: number;
 	public minLength: number;
 
-	constructor(value: TextContentTypes) {
-		super();
-		this.type = 'text';
-		this.minLength = 0;
-		this.subType = value;
-		switch (value) {
+	constructor(subType: TextContentTypes, values?: Partial<TextTypeSetting>) {
+		super({
+			name: values?.name ?? '',
+			type: values?.type ?? 'text',
+			isPrivate: values?.isPrivate,
+			isRequire: values?.isRequire,
+			isUnique: values?.isUnique
+		});
+		// default setting base on subType
+		this.minLength = values?.minLength ?? 0;
+		this.subType = subType;
+		switch (subType) {
 			case 'short_text':
-				this.maxLength = 255;
+				if (
+					values?.maxLength === 0 ||
+					values?.maxLength === undefined
+				) {
+					this.maxLength = TextSchema.maxLength;
+				} else {
+					this.maxLength = values?.maxLength;
+				}
 				break;
 			case 'long_text':
 			case 'reach_text':
-				this.maxLength = 65535;
+				if (
+					values?.maxLength === 0 ||
+					values?.maxLength === undefined
+				) {
+					this.maxLength = 65535;
+				} else {
+					this.maxLength = values?.maxLength;
+				}
+
 				break;
 		}
+	}
+
+	public static toTextTypeSetting(values: AttributeInfoFormValues) {
+		const textSetting = new TextTypeSetting(
+			values.baseSettings.subType as TextContentTypes,
+			{
+				name: values.baseSettings.attributeName,
+				isRequire: values.advancedSettings.required,
+				isUnique: values.advancedSettings.unique,
+				isPrivate: values.advancedSettings.private,
+				maxLength: values.advancedSettings.maxLength,
+				minLength: values.advancedSettings.minLength
+			}
+		);
+		return textSetting;
+	}
+}
+
+export class MediaTypeSetting extends TypeSetting {
+	// allowed extension
+	public subType;
+	public mediaExtension: MediaExtensions | ''; // set when upload file
+	public maxSize!: number;
+	public minSize: number;
+	public maxLength!: number;
+	public minLength: number;
+
+	constructor(
+		subType: MediaContentTypes,
+		values?: Partial<MediaTypeSetting>
+	) {
+		super({
+			name: values?.name ?? '',
+			type: values?.type ?? 'media',
+			isPrivate: values?.isPrivate,
+			isRequire: values?.isRequire,
+			isUnique: values?.isUnique
+		});
+		this.mediaExtension = '';
+		this.minSize = 0;
+		this.minLength = 0;
+		this.subType = subType;
+
+		switch (subType) {
+			case 'image':
+				if (values?.maxSize === 0 || values?.maxSize === undefined) {
+					this.maxSize = ImageSchema.maxSize; // 4 MB
+				} else {
+					this.maxSize = values?.maxSize;
+				}
+				break;
+			case 'audio':
+				if (values?.maxSize === 0 || values?.maxSize === undefined) {
+					this.maxSize = AudioSchema.maxSize; // 32 MB
+				} else {
+					this.maxSize = values?.maxSize;
+				}
+
+				if (
+					values?.maxLength === 0 ||
+					values?.maxLength === undefined
+				) {
+					this.maxLength = AudioSchema.maxLength;
+				} else {
+					this.maxLength = values?.maxLength;
+				}
+				break;
+			case 'video':
+				if (values?.maxSize === 0 || values?.maxSize === undefined) {
+					this.maxSize = VideoSchema.maxSize; // 512 MB
+				} else {
+					this.maxSize = values?.maxSize;
+				}
+
+				if (
+					values?.maxLength === 0 ||
+					values?.maxLength === undefined
+				) {
+					this.maxLength = VideoSchema.maxLength;
+				} else {
+					this.maxLength = values?.maxLength;
+				}
+				break;
+		}
+	}
+
+	public static toMediaTypeSetting(values: AttributeInfoFormValues) {
+		const mediaSetting = new MediaTypeSetting(
+			values.baseSettings.subType as MediaContentTypes,
+			{
+				name: values.baseSettings.attributeName,
+				isRequire: values.advancedSettings.required,
+				isUnique: values.advancedSettings.unique,
+				isPrivate: values.advancedSettings.private,
+				maxLength: values.advancedSettings.maxLength,
+				minLength: values.advancedSettings.minLength,
+				maxSize: values.advancedSettings.maxSize,
+				minSize: values.advancedSettings.minSize
+			}
+		);
+
+		return mediaSetting;
 	}
 }
 
@@ -120,39 +264,6 @@ export class PostsTypeSetting extends TypeSetting {
 	constructor() {
 		super();
 		this.type = 'posts';
-	}
-}
-
-export class MediaTypeSetting extends TypeSetting {
-	// allowed extension
-	public subType;
-	public mediaExtension: MediaExtensions | ''; // set when upload file
-	public maxSize!: number;
-	public minSize: number;
-	public maxLength!: number;
-	public minLength: number;
-
-	constructor(value: MediaContentTypes) {
-		super();
-		this.type = 'media';
-		this.mediaExtension = '';
-		this.minSize = 0;
-		this.minLength = 0;
-		this.subType = value;
-
-		switch (value) {
-			case 'image':
-				this.maxSize = ImageSchema.maxSize; // 4 MB
-				break;
-			case 'audio':
-				this.maxSize = AudioSchema.maxSize; // 32 MB
-				this.maxLength = AudioSchema.maxLength;
-				break;
-			case 'video':
-				this.maxSize = VideoSchema.maxSize; // 512 MB
-				this.maxLength = VideoSchema.maxLength;
-				break;
-		}
 	}
 }
 

@@ -23,7 +23,7 @@ export class CollectionDbModel {
 	description!: string;
 	slug!: string;
 	setting!: PostCollectionSettingProps;
-	attributes: CollectionAttributeDbModel[] | CollectionDbModel[] = [];
+	attributes: (CollectionAttributeDbModel | CollectionDbModel)[] = [];
 	createdAt!: Date;
 	updatedAt!: Date;
 	_id!: string;

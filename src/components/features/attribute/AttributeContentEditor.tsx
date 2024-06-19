@@ -6,8 +6,6 @@ import {
 	TextTypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
-	Box,
-	Button,
 	ImageList,
 	ImageListItem,
 	ImageListItemBar,
@@ -43,18 +41,13 @@ import { Config as ApiServiceConfig } from '@lst97/common-restful';
 
 import { v4 as uuidv4 } from 'uuid';
 import {
-	IMediaContent,
-	IParallelFilesUploadContent
-} from '../../../models/share/collection/AttributeContents';
+	IMediaContent} from '../../../models/share/collection/AttributeContents';
 import { ImageViewer } from '../../common/medias/ImageViewer';
 import {
 	CollectionDbModel,
 	ICollectionDbModel
 } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
-import AttributeTypesGrid from '../collection/AttributeTypesGrid';
-import { CreateCollectionStepper } from '../collection/CollectionStepper';
-import { AttributeTypesForm } from '../collection/forms/AttributeTypesForm';
 
 const PlainTextEditor = (props: {
 	value: string;
@@ -202,7 +195,7 @@ const FilesUploader = (props: {
 
 			const mediaType = (
 				props.attribute.setting as MediaTypeSettingDbModel
-			).mediaSubType;
+			).subType;
 
 			// todo: migrate to axios
 			const request = new XMLHttpRequest();
@@ -268,7 +261,7 @@ const FilesUploader = (props: {
 	);
 };
 
-const PostsEditor = (props: {
+const PostsEditorComponent = (props: {
 	slug: string;
 	posts: ICollectionDbModel[];
 	value?: ICollectionDbModel[];
@@ -338,44 +331,13 @@ const PostsEditor = (props: {
 	);
 };
 
-const PostContentEditor = (props: {
+
+const AttributeEditorComponent = (props: {
 	slug: string;
-	attributes: CollectionAttributeDbModel[];
-	value?: ICollectionDbModel;
-	onChange?: (value: ICollectionDbModel) => void;
-}) => {
-	const [posts, setPosts] = useState<ICollectionDbModel | undefined>(
-		props.value
-	);
-
-	const fetchPosts = async () => {
-		return await PostsApiService.getPostsCollection(props.slug);
-	};
-
-	useEffect(() => {
-		fetchPosts().then((posts) => setPosts(posts));
-	}, []);
-
-	return <></>;
-};
-
-const AttributeContentEditor = ({
-	slug,
-	selectedCollectionIndex,
-	selectedAttributeIndex,
-	attribute
-}: {
-	slug: string;
-	selectedCollectionIndex: number;
-	selectedAttributeIndex: number;
 	attribute: CollectionAttributeDbModel;
+	selectedIndies: { collectionIndex: number; attributeIndex: number };
+	setCollections: React.Dispatch<React.SetStateAction<CollectionDbModel[]>>;
 }) => {
-	const { setCollections } = useContext(CollectionContext);
-	const [postsCollection, setPostsCollection] =
-		useState<ICollectionDbModel>();
-
-	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
-
 	const textTypeComponents = {
 		long_text: PlainTextEditor,
 		short_text: PlainTextEditor,
@@ -388,37 +350,30 @@ const AttributeContentEditor = ({
 		video: FilesUploader
 	};
 
-	const fetchPosts = async () => {
-		return await PostsApiService.getPostsCollection(slug);
-	};
-
-	useEffect(() => {
-		fetchPosts().then((posts) => setPostsCollection(posts));
-	}, []);
-
-	switch (attribute.setting.type) {
+	switch (props.attribute.setting.type) {
 		case 'text': {
 			const EditorComponent =
 				textTypeComponents[
-					(attribute.setting as TextTypeSettingDbModel)
-						.textSubType as keyof typeof textTypeComponents
+					(props.attribute.setting as TextTypeSettingDbModel)
+						.subType as keyof typeof textTypeComponents
 				];
 
 			return (
 				<>
 					<Typography variant="h6" sx={{ p: 1 }}>
-						{attribute.setting.name}
+						{props.attribute.setting.name}
 					</Typography>
 					<EditorComponent
-						value={(attribute.content.value as string) ?? ''}
+						value={(props.attribute.content.value as string) ?? ''}
 						onChange={(value) => {
-							setCollections((prevCollections) => {
+							props.setCollections((prevCollections) => {
 								const updatedCollections = [...prevCollections];
 
 								(
-									updatedCollections[selectedCollectionIndex]
-										.attributes[
-										selectedAttributeIndex
+									updatedCollections[
+										props.selectedIndies.collectionIndex
+									].attributes[
+										props.selectedIndies.attributeIndex
 									] as CollectionAttributeDbModel
 								).content.value = value;
 								return updatedCollections;
@@ -431,61 +386,65 @@ const AttributeContentEditor = ({
 		case 'media': {
 			const EditorComponent =
 				mediaTypeComponents[
-					(attribute.setting as MediaTypeSettingDbModel)
-						.mediaSubType as keyof typeof mediaTypeComponents
+					(props.attribute.setting as MediaTypeSettingDbModel)
+						.subType as keyof typeof mediaTypeComponents
 				];
 
 			return (
 				<>
 					<Typography variant="h6" sx={{ p: 1 }}>
-						{attribute.setting.name}
+						{props.attribute.setting.name}
 					</Typography>
-					<EditorComponent slug={slug} attribute={attribute} />
+					<EditorComponent
+						slug={props.slug}
+						attribute={props.attribute}
+					/>
 				</>
 			);
 		}
-		case 'posts':
-			return (
-				<>
-					{!addPostDialogOpen && (
-						<Box
-							sx={{
-								display: 'flex',
-								flexDirection: 'row',
-								justifyContent: 'space-between'
-							}}
-						>
-							<Typography variant="h6" sx={{ p: 1 }}>
-								{attribute.setting.name}
-							</Typography>
-							<Button
-								variant="outlined"
-								onClick={() => {
-									setAddPostDialogOpen(true);
-								}}
-							>
-								add post
-							</Button>
-						</Box>
-					)}
 
-					{!addPostDialogOpen && (
-						<PostsEditor
-							slug={slug}
-							posts={
-								(postsCollection?.attributes as ICollectionDbModel[]) ??
-								[]
-							}
-						/>
-					)}
-
-					{addPostDialogOpen}
-				</>
-			);
 		default:
 			// Handle default case or potential errors
 			break;
 	}
+};
+
+const AttributeContentEditor = ({
+	slug,
+	selectedCollectionIndex,
+	selectedAttributeIndex,
+	attribute
+}: {
+	slug: string;
+	selectedCollectionIndex: number;
+	selectedAttributeIndex: number;
+	attribute: CollectionAttributeDbModel | CollectionDbModel;
+}) => {
+	const { setCollections } = useContext(CollectionContext);
+	const [postsCollection, setPostsCollection] =
+		useState<ICollectionDbModel>();
+
+	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
+
+	const fetchPosts = async () => {
+		return await PostsApiService.getPostsCollection(slug);
+	};
+
+	useEffect(() => {
+		fetchPosts().then((posts) => setPostsCollection(posts));
+	}, []);
+
+	return (attribute as any).collectionName === undefined ? (
+		<AttributeEditorComponent
+			slug={slug}
+			selectedIndies={{
+				collectionIndex: selectedCollectionIndex,
+				attributeIndex: selectedAttributeIndex
+			}}
+			attribute={attribute as CollectionAttributeDbModel}
+			setCollections={setCollections}
+		/>
+	) : null;
 };
 
 export default AttributeContentEditor;
