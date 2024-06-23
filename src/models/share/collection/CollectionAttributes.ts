@@ -1,4 +1,7 @@
-import { AttributeInfoFormValues } from '../../../components/features/collection/forms/AttributeTypesForm';
+import {
+	AttributeInfoFormValues,
+	AttributeSettingsHelper
+} from '../../../components/features/collection/forms/AttributeTypesForm';
 import { BaseContent } from './AttributeContents';
 import {
 	AttributeSettingTypes,
@@ -35,7 +38,8 @@ export class CollectionAttribute {
 
 			switch (values.baseSettings.type) {
 				case 'text': {
-					this.setting = TextTypeSetting.toTextTypeSetting(values);
+					this.setting =
+						AttributeSettingsHelper.toTextTypeSetting(values);
 					break;
 				}
 				case 'media': {

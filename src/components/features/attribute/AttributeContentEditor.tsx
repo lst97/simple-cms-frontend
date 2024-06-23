@@ -40,8 +40,7 @@ registerPlugin(FilePondPluginImageExifOrientation, FilePondPluginImagePreview);
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
 
 import { v4 as uuidv4 } from 'uuid';
-import {
-	IMediaContent} from '../../../models/share/collection/AttributeContents';
+import { IMediaContent } from '../../../models/share/collection/AttributeContents';
 import { ImageViewer } from '../../common/medias/ImageViewer';
 import {
 	CollectionDbModel,
@@ -100,22 +99,26 @@ export const GalleryEditor = (props: {
 
 		return items.map((item) => (
 			<ImageListItem key={item.url.split('/')[-1]}>
-				<img
-					crossOrigin="anonymous"
-					srcSet={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format&dpr=2 2x`}
-					src={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format`}
-					alt={item.fileName}
-					loading="lazy"
+				<button
 					onClick={() => {
 						setSelectedItem(item);
 					}}
-					style={{
-						cursor: 'pointer',
-						width: '100%',
-						height: '100%',
-						objectFit: 'cover'
-					}}
-				/>
+				>
+					<img
+						crossOrigin="anonymous"
+						srcSet={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format&dpr=2 2x`}
+						src={`${baseUrl}/${item.url}?w=248&fit=crop&auto=format`}
+						alt={item.fileName}
+						loading="lazy"
+						style={{
+							cursor: 'pointer',
+							width: '100%',
+							height: '100%',
+							objectFit: 'cover'
+						}}
+					/>
+				</button>
+
 				<ImageListItemBar title={item.fileName} />
 			</ImageListItem>
 		));
@@ -330,7 +333,6 @@ const PostsEditorComponent = (props: {
 		</TableContainer>
 	);
 };
-
 
 const AttributeEditorComponent = (props: {
 	slug: string;

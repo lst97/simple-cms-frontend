@@ -12,6 +12,7 @@ import { CollectionContext } from '../../../context/CollectionContext';
 import { DialogBaseProps } from '../../common/dialogs/Dialogs';
 import {
 	AttributeInfoFormValues,
+	AttributeSettingsHelper,
 	AttributeTypesForm
 } from './forms/AttributeTypesForm';
 
@@ -97,10 +98,11 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 					<DialogContent>
 						<AttributeTypesForm
 							onSubmit={(values: AttributeInfoFormValues) => {
+								console.log(attribute._id);
 								switch (values.baseSettings.type) {
 									case 'text':
 										handleSubmit(
-											TextTypeSetting.toTextTypeSetting(
+											AttributeSettingsHelper.toTextTypeSetting(
 												values
 											),
 											attribute._id
@@ -109,6 +111,9 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 							}}
 							type={attribute.setting.type ?? undefined}
 							submitLabel="Submit"
+							initialValues={AttributeSettingsHelper.toAttributeInfoFormValues(
+								attribute.setting
+							)}
 						/>
 					</DialogContent>
 				</>

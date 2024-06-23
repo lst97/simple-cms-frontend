@@ -144,21 +144,6 @@ export class TextTypeSetting extends TypeSetting {
 				break;
 		}
 	}
-
-	public static toTextTypeSetting(values: AttributeInfoFormValues) {
-		const textSetting = new TextTypeSetting(
-			values.baseSettings.subType as TextContentTypes,
-			{
-				name: values.baseSettings.attributeName,
-				isRequire: values.advancedSettings.required,
-				isUnique: values.advancedSettings.unique,
-				isPrivate: values.advancedSettings.private,
-				maxLength: values.advancedSettings.maxLength,
-				minLength: values.advancedSettings.minLength
-			}
-		);
-		return textSetting;
-	}
 }
 
 export class MediaTypeSetting extends TypeSetting {

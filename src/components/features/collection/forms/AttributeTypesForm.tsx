@@ -9,6 +9,7 @@ import {
 import Grid from '@mui/material/Unstable_Grid2';
 import {
 	MediaTypes,
+	TextContentTypes,
 	TextTypes
 } from '../../../../models/share/collection/BaseSchema';
 import {
@@ -22,7 +23,13 @@ import {
 	TextField,
 	Typography
 } from '@mui/material';
-import { SupportedAdvancedSettings } from '../../../../models/share/collection/AttributeTypeSettings';
+import {
+	MediaTypeSetting,
+	PostTypeSetting,
+	SupportedAdvancedSettings,
+	TextTypeSetting,
+	TypeSettingDbModel
+} from '../../../../models/share/collection/AttributeTypeSettings';
 import { FormikProps, useFormik } from 'formik';
 import DebugFormik from '../../../debug/DebugFormik';
 import { ReactNode } from 'react';
@@ -36,7 +43,7 @@ interface TabPanelProps {
 class AttributeBaseSettings {
 	attributeName: string = '';
 	type: SupportedAttributeTypes = SupportedAttributes.text;
-	subType: TextTypes | MediaTypes = TextTypes.short_text;
+	subType?: TextTypes | MediaTypes = TextTypes.short_text;
 }
 
 // included all the advanced settings
@@ -44,12 +51,68 @@ class AttributeAdvancedSettings {
 	required: boolean = false;
 	unique: boolean = false;
 	private: boolean = false;
-	maxLength: number = 0;
-	minLength: number = 0;
-	maxSize: number = 0;
-	minSize: number = 0;
-	comment: boolean = false;
-	reaction: boolean = false;
+	maxLength?: number = 0;
+	minLength?: number = 0;
+	maxSize?: number = 0;
+	minSize?: number = 0;
+	comment?: boolean = false;
+	reaction?: boolean = false;
+}
+
+export class AttributeSettingsHelper {
+	public static toAttributeInfoFormValues(typeSetting: TypeSettingDbModel) {
+		const values = new AttributeInfoFormValues();
+		values.baseSettings.type = typeSetting.type;
+		values.baseSettings.attributeName = typeSetting.name;
+		values.advancedSettings.required = typeSetting.isRequire;
+		values.advancedSettings.unique = typeSetting.isUnique;
+		values.advancedSettings.private = typeSetting.private;
+
+		switch (typeSetting.type) {
+			case 'text': {
+				const textSetting = typeSetting as unknown as TextTypeSetting;
+				values.baseSettings.subType = textSetting.subType;
+				values.advancedSettings.maxLength = textSetting.maxLength;
+				values.advancedSettings.minLength = textSetting.minLength;
+				break;
+			}
+			case 'media': {
+				const mediaSetting = typeSetting as unknown as MediaTypeSetting;
+				values.baseSettings.subType = mediaSetting.subType;
+				values.advancedSettings.maxLength = mediaSetting.maxLength;
+				values.advancedSettings.minLength = mediaSetting.minLength;
+				values.advancedSettings.maxSize = mediaSetting.maxSize;
+				values.advancedSettings.minSize = mediaSetting.minSize;
+				break;
+			}
+			case 'post': {
+				const postSetting = typeSetting as unknown as PostTypeSetting;
+				values.advancedSettings.comment = postSetting.comment;
+				values.advancedSettings.reaction = postSetting.reaction;
+				break;
+			}
+			case 'posts': {
+				break;
+			}
+		}
+
+		return values;
+	}
+
+	public static toTextTypeSetting(values: AttributeInfoFormValues) {
+		const textSetting = new TextTypeSetting(
+			values.baseSettings.subType as TextContentTypes,
+			{
+				name: values.baseSettings.attributeName,
+				isRequire: values.advancedSettings.required,
+				isUnique: values.advancedSettings.unique,
+				isPrivate: values.advancedSettings.private,
+				maxLength: values.advancedSettings.maxLength,
+				minLength: values.advancedSettings.minLength
+			}
+		);
+		return textSetting;
+	}
 }
 
 const SettingsTabPanel = (props: Readonly<TabPanelProps>) => {
@@ -469,21 +532,23 @@ export const AttributeTypesForm = (props: {
 	});
 
 	React.useEffect(() => {
-		switch (props.type) {
-			case SupportedAttributes.text:
-				formik.setFieldValue('baseSettings.type', 'text');
-				formik.setFieldValue('baseSettings.subType', 'short_text');
-				break;
-			case SupportedAttributes.media:
-				formik.setFieldValue('baseSettings.type', 'media');
-				formik.setFieldValue('baseSettings.subType', 'image');
-				break;
-			case SupportedAttributes.post:
-				formik.setFieldValue('baseSettings.type', 'post');
-				break;
-			case SupportedAttributes.posts:
-				formik.setFieldValue('baseSettings.type', 'posts');
-				break;
+		if (!props.initialValues) {
+			switch (props.type) {
+				case SupportedAttributes.text:
+					formik.setFieldValue('baseSettings.type', 'text');
+					formik.setFieldValue('baseSettings.subType', 'short_text');
+					break;
+				case SupportedAttributes.media:
+					formik.setFieldValue('baseSettings.type', 'media');
+					formik.setFieldValue('baseSettings.subType', 'image');
+					break;
+				case SupportedAttributes.post:
+					formik.setFieldValue('baseSettings.type', 'post');
+					break;
+				case SupportedAttributes.posts:
+					formik.setFieldValue('baseSettings.type', 'posts');
+					break;
+			}
 		}
 	}, [props.type]);
 

@@ -37,6 +37,7 @@ import { BaseContent } from '../../../models/share/collection/AttributeContents'
 import AttributeTypesGrid from './AttributeTypesGrid';
 import {
 	AttributeInfoFormValues,
+	AttributeSettingsHelper,
 	AttributeTypesForm
 } from './forms/AttributeTypesForm';
 
@@ -67,7 +68,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 		if (pendingAddAttributeType === SupportedAttributes.text) {
 			const newAttribute = new CollectionAttribute({
-				setting: TextTypeSetting.toTextTypeSetting(settings),
+				setting: AttributeSettingsHelper.toTextTypeSetting(settings),
 				content: new BaseContent()
 			});
 
