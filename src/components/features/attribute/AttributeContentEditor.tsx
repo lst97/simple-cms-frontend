@@ -97,7 +97,7 @@ export const GalleryEditor = (props: {
 			props.onChange?.(items);
 		}
 
-		return items.map((item) => (
+		return items?.map((item) => (
 			<ImageListItem key={item.url.split('/')[-1]}>
 				<button
 					onClick={() => {
@@ -128,22 +128,20 @@ export const GalleryEditor = (props: {
 			<ImageList variant="masonry" cols={3} gap={8}>
 				{fetchExistingImages()}
 			</ImageList>
-			<ImageViewer
-				baseUrl={baseUrl}
-				items={
-					props.value ??
-					(props.attribute.content.value as IMediaContent[])
-				}
-				selectedIndex={(
-					props.value ??
-					(props.attribute.content.value as IMediaContent[])
-				).findIndex(
-					(item) =>
-						item.url.split('/')[-1] ===
-						selectedItem?.url.split('/')[-1]
-				)}
-				onClose={onClose}
-			/>
+			{props.value && (
+				<ImageViewer
+					baseUrl={baseUrl}
+					items={props.attribute.content.value as IMediaContent[]}
+					selectedIndex={(
+						props.attribute.content.value as IMediaContent[]
+					).findIndex(
+						(item) =>
+							item.url.split('/')[-1] ===
+							selectedItem?.url.split('/')[-1]
+					)}
+					onClose={onClose}
+				/>
+			)}
 			<FilesUploader slug={props.slug} attribute={props.attribute} />
 		</>
 	);
