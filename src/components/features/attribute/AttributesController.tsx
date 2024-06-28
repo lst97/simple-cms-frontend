@@ -4,6 +4,7 @@ import { CollectionContext } from '../../../context/CollectionContext';
 import AttributeContentEditor from './AttributeContentEditor';
 import { CollectionApiService } from '../../../services/ApiService';
 import { LoadingIndicatorContext } from '@lst97/react-common-accessories';
+import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
 
 export const AttributesController = ({
 	selectedCollectionIndex
@@ -16,13 +17,17 @@ export const AttributesController = ({
 	CollectionApiService.useIndicator(showIndicator);
 
 	const handlePublish = () => {
-		// const publishCollection = async () => {
-		// 	await CollectionApiService.updateCollectionAttributes(
-		// 		collections[selectedCollectionIndex].slug,
-		// 		collections[selectedCollectionIndex].attributes
-		// 	);
-		// };
-		// publishCollection();
+		const publishCollection = async () => {
+			await CollectionApiService.updateCollectionAttributes(
+				collections[selectedCollectionIndex].slug,
+				collections[selectedCollectionIndex]
+					.attributes as CollectionAttributeDbModel[]
+			);
+		};
+
+		if (collections[selectedCollectionIndex].kind === 'collection') {
+			publishCollection();
+		}
 	};
 
 	return (

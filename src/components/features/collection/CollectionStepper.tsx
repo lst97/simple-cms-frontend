@@ -211,12 +211,22 @@ const StepContent = (props: {
 				case 'post':
 				case 'posts':
 					return (
-						<></>
-						// <AttributeTypesForm
-						// 	onSubmit={handleAddAnotherAttribute}
-						// 	type={selectedAttributeType}
-						// 	controller={collectionAttributeSettingFormCtrl}
-						// />
+						<AttributeTypesForm
+							onSubmit={(values: AttributeInfoFormValues) => {
+								props.values.formik.setFieldValue(
+									'attributes',
+									[
+										...props.values.formik.values
+											.attributes,
+										new CollectionAttribute(values)
+									]
+								);
+								props.onChanges.setDisableNext(false);
+								props.onChanges.setSelectedAttributeType(null);
+							}}
+							type={props.values.selectedAttributeType}
+							submitLabel="Submit"
+						/>
 					);
 				default:
 					return (

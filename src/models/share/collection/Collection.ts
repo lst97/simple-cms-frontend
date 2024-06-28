@@ -5,6 +5,7 @@ export interface PostCollectionSettingProps {
 	reaction: boolean;
 }
 export interface ICollectionDbModel {
+	kind: 'collection' | 'post' | 'posts';
 	username: string;
 	collectionName: string;
 	description?: string;
@@ -18,6 +19,7 @@ export interface ICollectionDbModel {
  * Collection model, mainly used to store collection data from the api response.
  */
 export class CollectionDbModel {
+	kind!: 'collection' | 'post' | 'posts';
 	username!: string;
 	collectionName!: string;
 	description!: string;

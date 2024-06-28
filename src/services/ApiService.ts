@@ -195,10 +195,10 @@ export class CollectionApiService extends ApiResultIndicator {
 		try {
 			const response = await ApiServiceInstance().put(
 				formatRoutes(
-					ApiConfig.instance.routes.updateCollectionAttribute,
+					ApiConfig.instance.routes.updateCollectionAttributes,
 					{ slug: slug }
 				),
-				attributes
+				{ attributes: attributes }
 			);
 
 			return response.data;
