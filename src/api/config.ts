@@ -3,9 +3,12 @@ import axios from 'axios';
 
 interface RoutesUrls {
 	createCollection: string;
+	createPostsCollection: string;
 	fetchCollections: string;
 	fetchCollection: string;
 	fetchPostsCollection: string;
+	fetchPostsCollections: string;
+	fetchPostsBySlug: string;
 	fetchPostBySlug: string;
 	updateCollectionAttributes: string;
 	updateCollectionAttribute: string;
@@ -59,10 +62,13 @@ export class ApiConfig {
 		const baseUrl = ApiServiceConfig.instance().baseUrl;
 		this._routes = {
 			createCollection: `${baseUrl}/collections`,
+			createPostsCollection: `${baseUrl}/collections/posts`,
 			fetchCollections: `${baseUrl}/collections`,
 			fetchCollection: `${baseUrl}/collections/{slug}`,
-			fetchPostsCollection: `${baseUrl}/posts/{slug}`,
-			fetchPostBySlug: `${baseUrl}/posts/{postsCollectionSlug}/{slug}`,
+			fetchPostsCollection: `${baseUrl}/collections/posts/{slug}`, // basic posts collection info
+			fetchPostsCollections: `${baseUrl}/collections/posts`, // all posts collections info created by user
+			fetchPostsBySlug: `${baseUrl}/posts/{postsCollectionSlug}?attributes={attributes}`, // detail posts info
+			fetchPostBySlug: `${baseUrl}/posts/{postsCollectionSlug}/{slug}`, // detail post info
 			updateCollectionAttributes: `${baseUrl}/collections/{slug}/attributes`,
 			updateCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}?setting={setting}&content={content}`,
 			addCollectionAttribute: `${baseUrl}/collections/{slug}/attribute`,

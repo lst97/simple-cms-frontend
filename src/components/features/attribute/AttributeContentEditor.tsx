@@ -47,7 +47,6 @@ import {
 	ICollectionDbModel
 } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
-
 const PlainTextEditor = (props: {
 	value: string;
 	onChange: (value: string) => void;
@@ -262,13 +261,37 @@ const FilesUploader = (props: {
 	);
 };
 
-const PostsEditorComponent = (props: {
-	slug: string;
-	posts: ICollectionDbModel[];
-	value?: ICollectionDbModel[];
+export const PostsEditor = (props: {
+	slug: string; // PostsCollectionSlug
+	posts?: ICollectionDbModel[];
 	onChange?: (value: ICollectionDbModel[]) => void;
 }) => {
-	const { value, onChange } = props;
+	const { slug, posts, onChange } = props;
+
+	const [postsCollection, setPostsCollection] = useState<
+		ICollectionDbModel[] | null
+	>(null);
+
+	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
+
+	const [basicPostsInfo, setBasicPostsInfo] = useState<ICollectionDbModel[]>(
+		[]
+	); // get the basic info without post attributes
+
+	useEffect(() => {
+		const fetchBasicPostsInfo = async () => {
+			const postsCollections = await PostsApiService.getPostsBySlug(
+				slug,
+				false
+			);
+			setBasicPostsInfo(postsCollections);
+		};
+
+		fetchBasicPostsInfo();
+	}, [slug]);
+
+	const { selectedPost, setSelectedPost } =
+		useState<ICollectionDbModel | null>(null);
 
 	return (
 		<TableContainer component={Paper}>
@@ -283,55 +306,79 @@ const PostsEditorComponent = (props: {
 						<TableCell align="right">Date</TableCell>
 					</TableRow>
 				</TableHead>
-				<TableBody>
-					{props.posts.map((post) => (
-						<TableRow
-							key={`${
-								(
-									post
-										.attributes[0] as CollectionAttributeDbModel
-								).content.value
-							}`}
-							sx={{
-								'&:last-child td, &:last-child th': {
-									border: 0
-								}
-							}}
-						>
-							<TableCell component="th" scope="row">
-								{`${
+				{posts && (
+					<TableBody>
+						{posts.map((post) => (
+							<TableRow
+								key={`${
 									(
 										post
 											.attributes[0] as CollectionAttributeDbModel
 									).content.value
 								}`}
-							</TableCell>
-							<TableCell align="right">
-								{'Not implemented'}
-							</TableCell>
-							<TableCell align="right">
-								{'Not implemented'}
-							</TableCell>
-							<TableCell align="right">
-								{post.setting?.comment &&
-									`${
+								sx={{
+									'&:last-child td, &:last-child th': {
+										border: 0
+									}
+								}}
+							>
+								<TableCell component="th" scope="row">
+									{`${
 										(
 											post
 												.attributes[0] as CollectionAttributeDbModel
 										).content.value
 									}`}
-							</TableCell>
-							<TableCell align="right">
-								{post.createdAt.toISOString()}
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{post.setting?.comment &&
+										`${
+											(
+												post
+													.attributes[0] as CollectionAttributeDbModel
+											).content.value
+										}`}
+								</TableCell>
+								<TableCell align="right">
+									{post.createdAt.toISOString()}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				)}
 			</Table>
 		</TableContainer>
 	);
 };
 
+const PostEditor = (props: {
+	slug: string;
+	post: ICollectionDbModel;
+	value?: ICollectionDbModel;
+	onChange?: (value: ICollectionDbModel) => void;
+}) => {
+	const { value, onChange } = props;
+
+	return (
+		<>
+			<Typography variant="h6" sx={{ p: 1 }}>
+				{`${
+					(props.post.attributes[0] as CollectionAttributeDbModel)
+						.content.value
+				}`}
+			</Typography>
+			<Typography variant="body1" sx={{ p: 1 }}>
+				{'Not implemented'}
+			</Typography>
+		</>
+	);
+};
 const AttributeEditorComponent = (props: {
 	slug: string;
 	attribute: CollectionAttributeDbModel;
@@ -348,6 +395,11 @@ const AttributeEditorComponent = (props: {
 		image: GalleryEditor,
 		audio: FilesUploader,
 		video: FilesUploader
+	};
+
+	const postsTypeComponents = {
+		posts: PostsEditor,
+		post: PostEditor
 	};
 
 	switch (props.attribute.setting.type) {
@@ -402,7 +454,6 @@ const AttributeEditorComponent = (props: {
 				</>
 			);
 		}
-
 		default:
 			// Handle default case or potential errors
 			break;
@@ -421,18 +472,6 @@ const AttributeContentEditor = ({
 	attribute: CollectionAttributeDbModel | CollectionDbModel;
 }) => {
 	const { setCollections } = useContext(CollectionContext);
-	const [postsCollection, setPostsCollection] =
-		useState<ICollectionDbModel>();
-
-	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
-
-	const fetchPosts = async () => {
-		return await PostsApiService.getPostsCollection(slug);
-	};
-
-	useEffect(() => {
-		fetchPosts().then((posts) => setPostsCollection(posts));
-	}, []);
 
 	return (attribute as any).collectionName === undefined ? (
 		<AttributeEditorComponent

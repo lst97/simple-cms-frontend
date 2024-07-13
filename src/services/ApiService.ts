@@ -15,6 +15,7 @@ import {
 } from '../models/share/collection/CollectionAttributes';
 import { AttributeSettingTypes } from '../models/share/collection/AttributeTypeSettings';
 import { IBaseContent } from '../models/share/collection/AttributeContents';
+import { ICollectionDbModel } from '../models/share/collection/Collection';
 
 const defaultApiErrorHandler = new ConsoleLogApiErrorHandler();
 export class CollectionApiService extends ApiResultIndicator {
@@ -223,6 +224,41 @@ export class PostsApiService extends ApiResultIndicator {
 					slug: slug
 				})
 			);
+			return response.data as ICollectionDbModel;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return null;
+		}
+	}
+
+	static async getPostsCollections(...errorHandlers: IApiErrorHandler[]) {
+		try {
+			const response = await ApiServiceInstance().get(
+				ApiConfig.instance.routes.fetchPostsCollections
+			);
+			return response.data as ICollectionDbModel[];
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
+
+	static async createPostsCollection(
+		form: CollectionForm,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().post(
+				ApiConfig.instance.routes.createPostsCollection,
+				form
+			);
+
 			return response.data;
 		} catch (error) {
 			defaultApiErrorHandler.handleError(error);
@@ -233,6 +269,27 @@ export class PostsApiService extends ApiResultIndicator {
 		}
 	}
 
+	static async getPostsBySlug(
+		slug: string,
+		isAttributesIncluded: boolean = false,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().get(
+				formatRoutes(ApiConfig.instance.routes.fetchPostBySlug, {
+					postsCollectionSlug: slug,
+					attributes: isAttributesIncluded ? 'true' : 'false'
+				})
+			);
+			return response.data as ICollectionDbModel[];
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
 	static async getPostBySlug(
 		postsCollectionSlug: string,
 		slug: string,

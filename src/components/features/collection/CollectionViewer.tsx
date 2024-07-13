@@ -22,7 +22,10 @@ import {
 } from '../../../models/share/collection/AttributeTypeSettings';
 import { useContext, useEffect, useState } from 'react';
 import { EditAttributeDialog } from './CollectionComponents';
-import { CollectionDbModel } from '../../../models/share/collection/Collection';
+import {
+	CollectionDbModel,
+	SupportedCollectionKind
+} from '../../../models/share/collection/Collection';
 import { CollectionContext } from '../../../context/CollectionContext';
 import {
 	SupportedAttributeTypes,
@@ -45,6 +48,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { ICollectionEndpoint } from '../../../models/share/endpoint/Endpoint';
 
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
+import { PostsCollectionAttributesViewer } from '../attribute/PostsCollectionAttributesViewer';
 const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const [selectedAttribute, setSelectedAttribute] =
 		useState<CollectionAttributeDbModel | null>(null);
@@ -154,25 +158,14 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 		}
 	};
 
-	return (
-		<div className="flex flex-col gap-2 m-8 rounded-md bg-white shadow-sm">
-			<div className="flex flex-row justify-between">
-				<Typography variant="h6">
-					{collection.attributes?.length ?? 0} Attributes
-				</Typography>
-				<div className="flex flex-row gap-2">
-					<Button
-						variant="contained"
-						color="primary"
-						onClick={handleAddPendingAttribute}
-					>
-						+ Add attribute
-					</Button>
-				</div>
-			</div>
-			{collection.attributes &&
+	const renderAttributes = (kind: SupportedCollectionKind) => {
+		if (
+			kind === 'collection' &&
+			collection.attributes &&
 			collection.attributes.length !== 0 &&
-			(collection.attributes[0].setting as any).type !== undefined ? (
+			(collection.attributes[0].setting as any).type !== undefined
+		) {
+			return (
 				<Stack direction="column" spacing={1}>
 					{collection.attributes.map((attribute) => (
 						<div
@@ -243,9 +236,33 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 						</div>
 					))}
 				</Stack>
-			) : (
-				<Typography variant="body1">No fields added yet</Typography>
-			)}
+			);
+		} else if (kind === 'posts') {
+			// render the posts table
+			return <PostsCollectionAttributesViewer slug={collection.slug} />;
+		} else {
+			return <Typography variant="body1">No fields added yet</Typography>;
+		}
+	};
+
+	return (
+		<div className="flex flex-col gap-2 m-8 rounded-md bg-white shadow-sm">
+			<div className="flex flex-row justify-between">
+				<Typography variant="h6">
+					{collection.attributes?.length ?? 0}{' '}
+					{collection.kind === 'posts' ? 'Posts' : 'Attributes'}
+				</Typography>
+				<div className="flex flex-row gap-2">
+					<Button
+						variant="contained"
+						color="primary"
+						onClick={handleAddPendingAttribute}
+					>
+						{collection.kind === 'posts' ? 'Add Post' : 'Add Field'}
+					</Button>
+				</div>
+			</div>
+			{renderAttributes(collection.kind)}
 
 			{selectedAttribute ? (
 				<EditAttributeDialog
@@ -366,6 +383,15 @@ const CollectionViewer = ({
 		setAnchorEl(event.currentTarget);
 	};
 
+	const constructUrl = (collection: CollectionDbModel) => {
+		switch (collection.kind) {
+			case 'posts':
+				return `/collections/posts/${collection.slug}`;
+			case 'collection':
+				return `/collections/${collection.slug}`;
+		}
+	};
+
 	return (
 		<>
 			{collection ? (
@@ -385,7 +411,7 @@ const CollectionViewer = ({
 										: `${
 												ApiServiceConfig.instance()
 													.baseUrl
-										  }/collections/${collection.slug}`
+										  }${constructUrl(collection)}`
 								}
 								variant="subtitle2"
 							>{`${subdirectory}`}</Link>

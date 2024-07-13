@@ -21,8 +21,12 @@ import CollectionBaseInfoForm, {
 } from './forms/CollectionBaseInfoForm';
 import { FormikProps, useFormik } from 'formik';
 import DebugFormik from '../../debug/DebugFormik';
-import { CollectionApiService } from '../../../services/ApiService';
+import {
+	CollectionApiService,
+	PostsApiService
+} from '../../../services/ApiService';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
+import { TypeSetting } from '../../../models/share/collection/AttributeTypeSettings';
 
 interface StepControlProps {
 	disablePrevious?: boolean;
@@ -163,6 +167,8 @@ interface StepContentOnChange {
 	setSelectedAttributeType: React.Dispatch<SupportedAttributeTypes | null>;
 	setDisablePrevious: React.Dispatch<React.SetStateAction<boolean>>;
 	setDisableNext: React.Dispatch<React.SetStateAction<boolean>>;
+	handleNextClick: (activeStep: number) => Promise<void>;
+	handlePreviousClick: (activeStep: number) => void;
 }
 
 const StepContent = (props: {
@@ -201,6 +207,10 @@ const StepContent = (props: {
 										new CollectionAttribute(values)
 									]
 								);
+								props.values.formik.setFieldValue(
+									'kind',
+									'posts'
+								);
 								props.onChanges.setDisableNext(false);
 								props.onChanges.setSelectedAttributeType(null);
 							}}
@@ -221,8 +231,16 @@ const StepContent = (props: {
 										new CollectionAttribute(values)
 									]
 								);
+								props.values.formik.setFieldValue(
+									'kind',
+									'posts'
+								);
 								props.onChanges.setDisableNext(false);
 								props.onChanges.setSelectedAttributeType(null);
+								props.onChanges.handleNextClick(
+									props.values.step
+								);
+								props.onChanges.setDisablePrevious(true);
 							}}
 							type={props.values.selectedAttributeType}
 							submitLabel="Submit"
@@ -264,8 +282,11 @@ const StepReview = (props: { collection: CollectionForm }) => {
 			</Typography>
 			<Typography variant="body1">Attributes:</Typography>
 			{props.collection.attributes.map((attr) => (
-				<Button key={attr.setting.name} variant="outlined">
-					{attr.setting.name}
+				<Button
+					key={(attr.setting as TypeSetting).name}
+					variant="outlined"
+				>
+					{(attr.setting as TypeSetting).name}
 				</Button>
 			))}
 		</div>
@@ -337,16 +358,31 @@ export const CreateCollectionStepper = () => {
 			case 1:
 				break;
 			case 2: {
-				// api call to create collection
-				const newCollection =
-					await CollectionApiService.createCollection(formik.values);
-				setCollections([
-					...collections,
-					newCollection as CollectionDbModel
-				]);
-
-				console.log(newCollection);
-
+				switch (formik.values.kind) {
+					case 'collection': {
+						// api call to create collection
+						const newCollection =
+							await CollectionApiService.createCollection(
+								formik.values
+							);
+						setCollections([
+							...collections,
+							newCollection as CollectionDbModel
+						]);
+						break;
+					}
+					case 'posts': {
+						const newCollection =
+							await PostsApiService.createPostsCollection(
+								formik.values
+							);
+						setCollections([
+							...collections,
+							newCollection as CollectionDbModel
+						]);
+						break;
+					}
+				}
 				break;
 			}
 			default:
@@ -385,7 +421,9 @@ export const CreateCollectionStepper = () => {
 					setCollectionBaseInfo,
 					setSelectedAttributeType,
 					setDisablePrevious,
-					setDisableNext
+					setDisableNext,
+					handleNextClick,
+					handlePreviousClick
 				}}
 			/>
 			<StepControl

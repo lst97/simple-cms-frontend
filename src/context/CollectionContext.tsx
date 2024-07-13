@@ -1,7 +1,7 @@
 // DataContext.js
 import { createContext, useState, useEffect } from 'react';
 import { CollectionDbModel } from '../models/share/collection/Collection';
-import { CollectionApiService } from '../services/ApiService';
+import { CollectionApiService, PostsApiService } from '../services/ApiService';
 
 type Props = {
 	children?: React.ReactNode;
@@ -27,7 +27,9 @@ const CollectionProvider = ({ children }: Props) => {
 	);
 
 	const fetchCollections = async () => {
-		setCollections(await CollectionApiService.getCollections());
+		const collections = await CollectionApiService.getCollections();
+		const postsCollections = await PostsApiService.getPostsCollections();
+		setCollections([...collections, ...postsCollections]);
 	};
 
 	useEffect(() => {

@@ -1,6 +1,6 @@
 import { CollectionAttribute } from '../../share/collection/CollectionAttributes';
 interface CollectionFormProps {
-	kind: 'collection' | 'post';
+	kind: 'collection' | 'post' | 'posts';
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
 }
@@ -12,7 +12,7 @@ export interface CollectionInfo {
 }
 
 export class CollectionForm implements CollectionFormProps {
-	kind: 'collection' | 'post';
+	kind: 'collection' | 'post' | 'posts';
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
 

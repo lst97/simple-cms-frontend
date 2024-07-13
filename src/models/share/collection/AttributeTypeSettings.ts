@@ -1,3 +1,4 @@
+import { PostsTypeSetting } from './AttributeTypeSettings';
 import { AttributeInfoFormValues } from '../../../components/features/collection/forms/AttributeTypesForm';
 import {
 	TextSchema,
@@ -61,6 +62,8 @@ export interface MediaTypeSettingDbModel extends TypeSettingDbModel {
 	minSize: number;
 	subType: MediaContentTypes;
 }
+
+export interface PostsTypeSettingDbModel extends TypeSettingDbModel {}
 
 export type AttributeSettingTypes =
 	| TypeSetting
