@@ -25,8 +25,14 @@ import {
 	CollectionApiService,
 	PostsApiService
 } from '../../../services/ApiService';
-import { CollectionDbModel } from '../../../models/share/collection/Collection';
-import { TypeSetting } from '../../../models/share/collection/AttributeTypeSettings';
+import {
+	CollectionDbModel,
+	SupportedCollectionKind
+} from '../../../models/share/collection/Collection';
+import {
+	TextTypeSetting,
+	TypeSetting
+} from '../../../models/share/collection/AttributeTypeSettings';
 
 interface StepControlProps {
 	disablePrevious?: boolean;
@@ -219,6 +225,50 @@ const StepContent = (props: {
 						/>
 					);
 				case 'post':
+					return (
+						<AttributeTypesForm
+							onSubmit={(values: AttributeInfoFormValues) => {
+								const titleAttribute = new CollectionAttribute(
+									new AttributeInfoFormValues(
+										new TextTypeSetting('short_text', {
+											name: 'Title'
+										})
+									)
+								);
+								const contentAttribute =
+									new CollectionAttribute(
+										new AttributeInfoFormValues(
+											new TextTypeSetting('long_text', {
+												name: 'Content'
+											})
+										)
+									);
+
+								// TODO: add reaction and comment attribute base on values.baseSettings
+								props.values.formik.setFieldValue(
+									'attributes',
+									[
+										...props.values.formik.values
+											.attributes,
+										titleAttribute,
+										contentAttribute
+									]
+								);
+								props.values.formik.setFieldValue(
+									'kind',
+									'post'
+								);
+								props.onChanges.setDisableNext(false);
+								props.onChanges.setSelectedAttributeType(null);
+								props.onChanges.handleNextClick(
+									props.values.step
+								);
+								props.onChanges.setDisablePrevious(true);
+							}}
+							type={props.values.selectedAttributeType}
+							submitLabel="Submit"
+						/>
+					);
 				case 'posts':
 					return (
 						<AttributeTypesForm
@@ -298,16 +348,27 @@ const StepResult = () => {
 		<Typography variant="h6">Collection created successfully!</Typography>
 	);
 };
-export const CreateCollectionStepper = () => {
+
+interface CollectionStepperProps {
+	kind: SupportedCollectionKind;
+	option?: {slug: string}
+}
+export const CreateCollectionStepper = (
+	props: CollectionStepperProps = { kind: 'collection' }
+) => {
 	const formik = useFormik({
-		initialValues: new CollectionForm(),
+		initialValues: new CollectionForm(props.kind),
 		onSubmit: (values: CollectionForm) => {
 			console.log(values);
 		}
 	});
 
+	// if the kind is post, AttributeTypesGrid will be hidden
+
 	const [selectedAttributeType, setSelectedAttributeType] =
-		React.useState<SupportedAttributeTypes | null>(null);
+		React.useState<SupportedAttributeTypes | null>(
+			props.kind === 'collection' ? null : props.kind
+		);
 
 	// step control buttons state
 	const [disableNext, setDisableNext] = React.useState(true);
@@ -330,7 +391,10 @@ export const CreateCollectionStepper = () => {
 		switch (activeStep) {
 			case 1:
 				setDisablePrevious(true);
-				setSelectedAttributeType(null);
+				if (props.kind === 'collection') {
+					setSelectedAttributeType(null);
+				}
+
 				break;
 			default:
 				setDisablePrevious(false);
@@ -365,6 +429,17 @@ export const CreateCollectionStepper = () => {
 							await CollectionApiService.createCollection(
 								formik.values
 							);
+						setCollections([
+							...collections,
+							newCollection as CollectionDbModel
+						]);
+						break;
+					}
+					case 'post': {
+						const newCollection = await PostsApiService.createPostByPostsCollection(
+							props.option!.slug as string,
+							formik.values
+						);
 						setCollections([
 							...collections,
 							newCollection as CollectionDbModel

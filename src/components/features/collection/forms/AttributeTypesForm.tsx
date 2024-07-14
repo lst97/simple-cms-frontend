@@ -28,6 +28,7 @@ import {
 	PostTypeSetting,
 	SupportedAdvancedSettings,
 	TextTypeSetting,
+	TypeSetting,
 	TypeSettingDbModel
 } from '../../../../models/share/collection/AttributeTypeSettings';
 import { FormikProps, useFormik } from 'formik';
@@ -43,7 +44,9 @@ interface TabPanelProps {
 class AttributeBaseSettings {
 	attributeName: string = '';
 	type: SupportedAttributeTypes = SupportedAttributes.text;
-	subType?: TextTypes | MediaTypes = TextTypes.short_text;
+	subType?: TextTypes | MediaTypes | null = null;
+	comment?: boolean = false;
+	reaction?: boolean = false;
 }
 
 // included all the advanced settings
@@ -55,8 +58,6 @@ class AttributeAdvancedSettings {
 	minLength?: number = 0;
 	maxSize?: number = 0;
 	minSize?: number = 0;
-	comment?: boolean = false;
-	reaction?: boolean = false;
 }
 
 export class AttributeSettingsHelper {
@@ -87,8 +88,8 @@ export class AttributeSettingsHelper {
 			}
 			case 'post': {
 				const postSetting = typeSetting as unknown as PostTypeSetting;
-				values.advancedSettings.comment = postSetting.comment;
-				values.advancedSettings.reaction = postSetting.reaction;
+				values.baseSettings.comment = postSetting.comment;
+				values.baseSettings.reaction = postSetting.reaction;
 				break;
 			}
 			case 'posts': {
@@ -139,9 +140,29 @@ const a11yProps = (index: number) => {
 };
 
 export class AttributeInfoFormValues {
-	baseSettings: AttributeBaseSettings = new AttributeBaseSettings();
-	advancedSettings: AttributeAdvancedSettings =
-		new AttributeAdvancedSettings();
+	baseSettings: AttributeBaseSettings;
+	advancedSettings: AttributeAdvancedSettings;
+
+	constructor(setting?: TypeSetting) {
+		this.baseSettings = new AttributeBaseSettings();
+		this.advancedSettings = new AttributeAdvancedSettings();
+
+		switch (setting?.type) {
+			case 'text':
+				const textSetting = setting as TextTypeSetting;
+				this.baseSettings.subType = textSetting.subType;
+				this.baseSettings.attributeName = textSetting.name;
+				this.advancedSettings.maxLength = textSetting.maxLength;
+				this.advancedSettings.minLength = textSetting.minLength;
+				break;
+
+			case 'reaction':
+			// TODO: add reaction setting
+			case 'comment':
+				// TODO: add comment setting
+				break;
+		}
+	}
 }
 
 const BaseSettings = (props: {
@@ -284,9 +305,11 @@ const BaseSettings = (props: {
 						control={
 							<Checkbox
 								checked={
-									props.formik.values.advancedSettings.comment
+									props.formik.values.baseSettings.comment
 								}
-								onChange={props.formik.handleChange}
+								onChange={props.formik.handleChange(
+									'baseSettings.comment'
+								)}
 							/>
 						}
 						label="Comment"
@@ -297,10 +320,11 @@ const BaseSettings = (props: {
 						control={
 							<Checkbox
 								checked={
-									props.formik.values.advancedSettings
-										.reaction
+									props.formik.values.baseSettings.reaction
 								}
-								onChange={props.formik.handleChange}
+								onChange={props.formik.handleChange(
+									'baseSettings.reaction'
+								)}
 							/>
 						}
 						label="Reaction"
@@ -314,18 +338,22 @@ const BaseSettings = (props: {
 		props.formik !== undefined && (
 			<Box>
 				<FormControl>
-					<TextField
-						id="type-name-input"
-						label="Attribute name"
-						name="attributeName"
-						required={true}
-						helperText="No spaces allowed"
-						value={props.formik.values.baseSettings.attributeName}
-						variant="outlined"
-						onChange={props.formik.handleChange(
-							'baseSettings.attributeName'
-						)}
-					/>
+					{props.formik.values.baseSettings.type !== 'post' && (
+						<TextField
+							id="type-name-input"
+							label="Attribute name"
+							name="attributeName"
+							required={true}
+							helperText="No spaces allowed"
+							value={
+								props.formik.values.baseSettings.attributeName
+							}
+							variant="outlined"
+							onChange={props.formik.handleChange(
+								'baseSettings.attributeName'
+							)}
+						/>
+					)}
 					<SubTypeOptions
 						type={props.formik.values.baseSettings.type}
 					/>
@@ -560,7 +588,11 @@ export const AttributeTypesForm = (props: {
 				<Button
 					onClick={() => formik.handleSubmit()}
 					variant="contained"
-					disabled={formik.values.baseSettings.attributeName === ''}
+					disabled={
+						formik.values.baseSettings.type !== 'post'
+							? formik.values.baseSettings.attributeName === ''
+							: false
+					}
 				>
 					{props.submitLabel ?? 'Submit'}
 				</Button>

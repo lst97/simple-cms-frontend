@@ -269,6 +269,50 @@ export class PostsApiService extends ApiResultIndicator {
 		}
 	}
 
+	// create a post under a posts collection
+	static async createPostByPostsCollection(
+		postsCollectionSlug: string,
+		form: CollectionForm,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().post(
+				formatRoutes(ApiConfig.instance.routes.createPostsCollection, {
+					slug: postsCollectionSlug
+				}),
+				form
+			);
+
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return null;
+		}
+	}
+
+	// Create a post under collection
+	static async createSinglePost(
+		form: CollectionForm,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().post(
+				ApiConfig.instance.routes.createCollection,
+				form
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return null;
+		}
+	}
+
 	static async getPostsBySlug(
 		slug: string,
 		isAttributesIncluded: boolean = false,

@@ -49,6 +49,7 @@ import { ICollectionEndpoint } from '../../../models/share/endpoint/Endpoint';
 
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
 import { PostsCollectionAttributesViewer } from '../attribute/PostsCollectionAttributesViewer';
+import { CreateCollectionStepper } from './CollectionStepper';
 const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const [selectedAttribute, setSelectedAttribute] =
 		useState<CollectionAttributeDbModel | null>(null);
@@ -57,6 +58,8 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 	const [isAddAttributeDialogOpen, setIsAddAttributeDialogOpen] =
 		useState(false);
+
+	const [isAddPostDialogOpen, setIsAddPostDialogOpen] = useState(false);
 
 	const [pendingAddAttributeType, setPendingAddAttributeType] =
 		useState<SupportedAttributeTypes | null>(null);
@@ -139,6 +142,10 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 	const handleAddPendingAttribute = () => {
 		setIsAddAttributeDialogOpen(true);
+	};
+
+	const handleAddPendingPost = () => {
+		setIsAddPostDialogOpen(true);
 	};
 
 	const onAttributeTypeSelected = (
@@ -256,7 +263,11 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 					<Button
 						variant="contained"
 						color="primary"
-						onClick={handleAddPendingAttribute}
+						onClick={
+							collection.kind === 'posts'
+								? handleAddPendingPost
+								: handleAddPendingAttribute
+						}
 					>
 						{collection.kind === 'posts' ? 'Add Post' : 'Add Field'}
 					</Button>
@@ -309,6 +320,21 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 					) : (
 						<AttributeTypesGrid onClick={onAttributeTypeSelected} />
 					)
+				}
+				onFinish={() => {}}
+			/>
+
+			<PlainDialog
+				open={isAddPostDialogOpen}
+				onClose={() => {
+					setIsAddPostDialogOpen(false);
+				}}
+				title="Add a Post"
+				content={
+					<CreateCollectionStepper
+						kind="post"
+						option={{ slug: collection.slug }}
+					/>
 				}
 				onFinish={() => {}}
 			/>

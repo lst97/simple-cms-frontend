@@ -1,3 +1,4 @@
+import { SupportedCollectionKind } from '../../share/collection/Collection';
 import { CollectionAttribute } from '../../share/collection/CollectionAttributes';
 interface CollectionFormProps {
 	kind: 'collection' | 'post' | 'posts';
@@ -16,8 +17,8 @@ export class CollectionForm implements CollectionFormProps {
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
 
-	constructor() {
-		this.kind = 'collection';
+	constructor(kind: SupportedCollectionKind) {
+		this.kind = kind;
 		this.info = { name: '', description: '', subdirectory: '' };
 		this.attributes = [];
 	}

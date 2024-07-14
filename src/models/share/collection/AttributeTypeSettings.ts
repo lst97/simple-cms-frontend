@@ -80,7 +80,7 @@ export type AttributeSettingTypes =
 	| DynamicTypeSetting;
 export class TypeSetting {
 	public name: string;
-	public type: string;
+	public type: SupportedAttributeTypes;
 	public isRequire: boolean;
 	public isUnique: boolean;
 	public isPrivate: boolean;
@@ -93,7 +93,7 @@ export class TypeSetting {
 		isPrivate
 	}: {
 		name: string;
-		type: string;
+		type: SupportedAttributeTypes;
 		isRequire?: boolean;
 		isUnique?: boolean;
 		isPrivate?: boolean;

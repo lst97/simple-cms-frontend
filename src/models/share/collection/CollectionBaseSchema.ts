@@ -23,4 +23,6 @@ export type SupportedAttributeTypes =
 	| 'decimal'
 	| 'number'
 	| 'boolean'
+	| 'reaction'
+	| 'comment'
 	| 'dynamic';

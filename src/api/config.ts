@@ -4,6 +4,8 @@ import axios from 'axios';
 interface RoutesUrls {
 	createCollection: string;
 	createPostsCollection: string;
+	createPostUnderPostsCollection: string;
+	createPost: string;
 	fetchCollections: string;
 	fetchCollection: string;
 	fetchPostsCollection: string;
@@ -63,6 +65,7 @@ export class ApiConfig {
 		this._routes = {
 			createCollection: `${baseUrl}/collections`,
 			createPostsCollection: `${baseUrl}/collections/posts`,
+			createPostUnderPostsCollection: `${baseUrl}/posts/{postsCollectionSlug}`, // create a post under a posts collection
 			fetchCollections: `${baseUrl}/collections`,
 			fetchCollection: `${baseUrl}/collections/{slug}`,
 			fetchPostsCollection: `${baseUrl}/collections/posts/{slug}`, // basic posts collection info
