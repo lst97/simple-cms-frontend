@@ -413,6 +413,8 @@ const CollectionViewer = ({
 		switch (collection.kind) {
 			case 'posts':
 				return `/collections/posts/${collection.slug}`;
+			case 'post':
+				return `/posts/${collection.slug}`;
 			case 'collection':
 				return `/collections/${collection.slug}`;
 		}

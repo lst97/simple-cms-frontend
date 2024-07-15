@@ -66,6 +66,7 @@ export class ApiConfig {
 			createCollection: `${baseUrl}/collections`,
 			createPostsCollection: `${baseUrl}/collections/posts`,
 			createPostUnderPostsCollection: `${baseUrl}/posts/{postsCollectionSlug}`, // create a post under a posts collection
+			createPost: `${baseUrl}/posts`, // create a post under a post collection
 			fetchCollections: `${baseUrl}/collections`,
 			fetchCollection: `${baseUrl}/collections/{slug}`,
 			fetchPostsCollection: `${baseUrl}/collections/posts/{slug}`, // basic posts collection info

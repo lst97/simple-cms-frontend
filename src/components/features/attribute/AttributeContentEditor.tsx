@@ -6,6 +6,7 @@ import {
 	TextTypeSettingDbModel
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
+	Button,
 	ImageList,
 	ImageListItem,
 	ImageListItemBar,
@@ -274,20 +275,18 @@ export const PostsEditor = (props: {
 
 	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
 
-	const [basicPostsInfo, setBasicPostsInfo] = useState<ICollectionDbModel[]>(
-		[]
-	); // get the basic info without post attributes
+	const [collections, setCollections] = useState<ICollectionDbModel[]>([]); // get the basic info without post attributes
 
 	useEffect(() => {
 		const fetchBasicPostsInfo = async () => {
-			const postsCollections = await PostsApiService.getPostsBySlug(
-				slug,
-				false
-			);
-			setBasicPostsInfo(postsCollections);
+			const postsCollections = await PostsApiService.getPostsBySlug(slug);
+			setCollections(postsCollections);
 		};
-
-		fetchBasicPostsInfo();
+		if (!posts) {
+			fetchBasicPostsInfo();
+		} else {
+			setCollections(posts);
+		}
 	}, [slug]);
 
 	const { selectedPost, setSelectedPost } =
@@ -298,60 +297,68 @@ export const PostsEditor = (props: {
 			<Table sx={{ minWidth: 650 }} aria-label="simple table">
 				<TableHead>
 					<TableRow>
-						<TableCell>Title</TableCell>
+						<TableCell>Slug</TableCell>
 						<TableCell align="right">Author</TableCell>
 						<TableCell align="right">Categories</TableCell>
 						<TableCell align="right">Tags</TableCell>
 						<TableCell align="right">Comments</TableCell>
 						<TableCell align="right">Date</TableCell>
+						<TableCell align="right">Actions</TableCell>
 					</TableRow>
 				</TableHead>
-				{posts && (
-					<TableBody>
-						{posts.map((post) => (
-							<TableRow
-								key={`${
-									(
-										post
-											.attributes[0] as CollectionAttributeDbModel
-									).content.value
-								}`}
-								sx={{
-									'&:last-child td, &:last-child th': {
-										border: 0
-									}
-								}}
-							>
-								<TableCell component="th" scope="row">
-									{`${
-										(
-											post
-												.attributes[0] as CollectionAttributeDbModel
-										).content.value
-									}`}
-								</TableCell>
-								<TableCell align="right">
-									{'Not implemented'}
-								</TableCell>
-								<TableCell align="right">
-									{'Not implemented'}
-								</TableCell>
-								<TableCell align="right">
-									{post.setting?.comment &&
-										`${
-											(
-												post
-													.attributes[0] as CollectionAttributeDbModel
-											).content.value
-										}`}
-								</TableCell>
-								<TableCell align="right">
-									{post.createdAt.toISOString()}
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				)}
+				<TableBody>
+					{collections.map((post) => (
+						<TableRow
+							key={`${
+								(
+									post
+										.attributes[0] as CollectionAttributeDbModel
+								).setting._id
+							}`}
+							sx={{
+								'&:last-child td, &:last-child th': {
+									border: 0
+								}
+							}}
+						>
+							<TableCell component="th" scope="row">
+								{`${post.slug}`}
+							</TableCell>
+							<TableCell align="right">
+								{`${post.username}`}
+							</TableCell>
+							<TableCell align="right">
+								{'Not implemented'}
+							</TableCell>
+							<TableCell align="right">
+								{'Not implemented'}
+							</TableCell>
+							<TableCell align="right">
+								{'Not implemented'}
+							</TableCell>
+							<TableCell align="right">
+								{post.createdAt}
+							</TableCell>
+							<TableCell align="right">
+								<Button
+									variant="contained"
+									onClick={() => {
+										setSelectedPost(post);
+									}}
+								>
+									Edit
+								</Button>
+								<Button
+									variant="outlined"
+									color="error"
+									onClick={() => {}}
+								>
+									Delete
+								</Button>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
 			</Table>
 		</TableContainer>
 	);

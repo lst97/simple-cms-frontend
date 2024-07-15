@@ -13,8 +13,8 @@ export interface ICollectionDbModel {
 	slug: string;
 	setting?: PostCollectionSettingProps;
 	attributes: CollectionAttributeDbModel[] | ICollectionDbModel[];
-	createdAt: Date;
-	updatedAt: Date;
+	createdAt: string;
+	updatedAt: string;
 }
 /**
  * Collection model, mainly used to store collection data from the api response.
@@ -27,7 +27,7 @@ export class CollectionDbModel {
 	slug!: string;
 	setting!: PostCollectionSettingProps;
 	attributes: (CollectionAttributeDbModel | CollectionDbModel)[] = [];
-	createdAt!: Date;
-	updatedAt!: Date;
+	createdAt!: string;
+	updatedAt!: string;
 	_id!: string;
 }

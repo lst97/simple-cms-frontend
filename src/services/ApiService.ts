@@ -277,9 +277,12 @@ export class PostsApiService extends ApiResultIndicator {
 	) {
 		try {
 			const response = await ApiServiceInstance().post(
-				formatRoutes(ApiConfig.instance.routes.createPostsCollection, {
-					slug: postsCollectionSlug
-				}),
+				formatRoutes(
+					ApiConfig.instance.routes.createPostUnderPostsCollection,
+					{
+						postsCollectionSlug: postsCollectionSlug
+					}
+				),
 				form
 			);
 
@@ -315,14 +318,12 @@ export class PostsApiService extends ApiResultIndicator {
 
 	static async getPostsBySlug(
 		slug: string,
-		isAttributesIncluded: boolean = false,
 		...errorHandlers: IApiErrorHandler[]
 	) {
 		try {
 			const response = await ApiServiceInstance().get(
-				formatRoutes(ApiConfig.instance.routes.fetchPostBySlug, {
-					postsCollectionSlug: slug,
-					attributes: isAttributesIncluded ? 'true' : 'false'
+				formatRoutes(ApiConfig.instance.routes.fetchPostsCollection, {
+					slug: slug
 				})
 			);
 			return response.data as ICollectionDbModel[];
