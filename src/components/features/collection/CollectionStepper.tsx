@@ -351,7 +351,8 @@ const StepResult = () => {
 
 interface CollectionStepperProps {
 	kind: SupportedCollectionKind;
-	option?: {slug: string}
+	onSubmitted?: (newCollection: CollectionDbModel | null) => void;
+	option?: { slug: string };
 }
 export const CreateCollectionStepper = (
 	props: CollectionStepperProps = { kind: 'collection' }
@@ -422,42 +423,43 @@ export const CreateCollectionStepper = (
 			case 1:
 				break;
 			case 2: {
+				let newCollection = null;
 				switch (formik.values.kind) {
 					case 'collection': {
-						// api call to create collection
-						const newCollection =
-							await CollectionApiService.createCollection(
+						newCollection =
+							(await CollectionApiService.createCollection(
 								formik.values
-							);
-						setCollections([
-							...collections,
-							newCollection as CollectionDbModel
-						]);
+							)) as CollectionDbModel;
+						setCollections([...collections, newCollection]);
 						break;
 					}
 					case 'post': {
-						const newCollection = await PostsApiService.createPostByPostsCollection(
-							props.option!.slug as string,
-							formik.values
-						);
-						setCollections([
-							...collections,
-							newCollection as CollectionDbModel
-						]);
+						if (props.option?.slug) {
+							newCollection =
+								(await PostsApiService.createPostByPostsCollection(
+									props.option!.slug,
+									formik.values
+								)) as CollectionDbModel;
+						} else {
+							newCollection =
+								(await PostsApiService.createSinglePost(
+									formik.values
+								)) as CollectionDbModel;
+							setCollections([...collections, newCollection]);
+						}
 						break;
 					}
 					case 'posts': {
-						const newCollection =
-							await PostsApiService.createPostsCollection(
+						newCollection =
+							(await PostsApiService.createPostsCollection(
 								formik.values
-							);
-						setCollections([
-							...collections,
-							newCollection as CollectionDbModel
-						]);
+							)) as CollectionDbModel;
+						setCollections([...collections, newCollection]);
 						break;
 					}
 				}
+
+				props.onSubmitted && props.onSubmitted(newCollection);
 				break;
 			}
 			default:

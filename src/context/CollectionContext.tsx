@@ -1,6 +1,9 @@
 // DataContext.js
-import { createContext, useState, useEffect } from 'react';
-import { CollectionDbModel } from '../models/share/collection/Collection';
+import { createContext, useState, useEffect, useMemo } from 'react';
+import {
+	CollectionDbModel,
+	ICollectionDbModel
+} from '../models/share/collection/Collection';
 import { CollectionApiService, PostsApiService } from '../services/ApiService';
 
 type Props = {
@@ -27,8 +30,11 @@ const CollectionProvider = ({ children }: Props) => {
 	);
 
 	const fetchCollections = async () => {
-		const collections = await CollectionApiService.getCollections();
-		const postsCollections = await PostsApiService.getPostsCollections();
+		const collections = (
+			(await CollectionApiService.getCollections()) as CollectionDbModel[]
+		).filter((collection) => collection.ref === undefined);
+		const postsCollections =
+			(await PostsApiService.getPostsCollections()) as CollectionDbModel[];
 		setCollections([...collections, ...postsCollections]);
 	};
 
@@ -37,7 +43,12 @@ const CollectionProvider = ({ children }: Props) => {
 	}, []);
 
 	return (
-		<CollectionContext.Provider value={{ collections, setCollections }}>
+		<CollectionContext.Provider
+			value={useMemo(
+				() => ({ collections, setCollections }),
+				[collections, setCollections]
+			)}
+		>
 			{children}
 		</CollectionContext.Provider>
 	);

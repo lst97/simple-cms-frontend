@@ -6,11 +6,10 @@ import { PostsEditor } from './AttributeContentEditor';
 
 interface PostsCollectionAttributesViewerProps {
 	slug: string;
+	posts?: ICollectionDbModel[];
 }
 export const PostsCollectionAttributesViewer = (
 	props: PostsCollectionAttributesViewerProps
 ) => {
-	const { collections } = useContext(CollectionContext);
-
-	return <PostsEditor slug={props.slug} />;
+	return <PostsEditor slug={props.slug} posts={props.posts} />;
 };

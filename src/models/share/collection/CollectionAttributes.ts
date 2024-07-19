@@ -27,14 +27,10 @@ export class CollectionAttribute {
 
 		if (values instanceof AttributeInfoFormValues) {
 			// Handle constructor with values parameter
-			this.setting = new TypeSetting({
-				name: values.baseSettings.attributeName,
-				type: values.baseSettings.type
-			});
-
-			// set basic setting
-			this.setting.name = values.baseSettings.attributeName;
-			this.setting.type = values.baseSettings.type;
+			this.setting = new TypeSetting(
+				values.baseSettings.attributeName,
+				values.baseSettings.type
+			);
 
 			switch (values.baseSettings.type) {
 				case 'text': {

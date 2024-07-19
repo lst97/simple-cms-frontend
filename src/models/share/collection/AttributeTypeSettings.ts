@@ -1,4 +1,3 @@
-import { PostsTypeSetting } from './AttributeTypeSettings';
 import { AttributeInfoFormValues } from '../../../components/features/collection/forms/AttributeTypesForm';
 import {
 	TextSchema,
@@ -71,38 +70,30 @@ export type AttributeSettingTypes =
 	| PostTypeSetting
 	| PostsTypeSetting
 	// | CodeTypeSetting
-	| MediaTypeSetting
-	| DocumentTypeSetting
-	| DateTypeSetting
-	| DecimalTypeSetting
-	| NumberTypeSetting
-	| BooleanTypeSetting
-	| DynamicTypeSetting;
+	| MediaTypeSetting;
+// | DocumentTypeSetting
+// | DateTypeSetting
+// | DecimalTypeSetting
+// | NumberTypeSetting
+// | BooleanTypeSetting
+// | DynamicTypeSetting;
 export class TypeSetting {
 	public name: string;
 	public type: SupportedAttributeTypes;
-	public isRequire: boolean;
-	public isUnique: boolean;
-	public isPrivate: boolean;
+	public required: boolean;
+	public unique: boolean;
+	public private: boolean;
 
-	constructor({
-		name,
-		type,
-		isRequire,
-		isUnique,
-		isPrivate
-	}: {
-		name: string;
-		type: SupportedAttributeTypes;
-		isRequire?: boolean;
-		isUnique?: boolean;
-		isPrivate?: boolean;
-	}) {
+	constructor(
+		name: string,
+		type: SupportedAttributeTypes,
+		options?: TypeSettingProps
+	) {
 		this.name = name;
 		this.type = type;
-		this.isRequire = isRequire ?? false;
-		this.isUnique = isUnique ?? false;
-		this.isPrivate = isPrivate ?? false;
+		this.required = options?.required ?? false;
+		this.unique = options?.unique ?? false;
+		this.private = options?.isPrivate ?? false;
 	}
 }
 
@@ -112,12 +103,10 @@ export class TextTypeSetting extends TypeSetting {
 	public minLength: number;
 
 	constructor(subType: TextContentTypes, values?: Partial<TextTypeSetting>) {
-		super({
-			name: values?.name ?? '',
-			type: values?.type ?? 'text',
-			isPrivate: values?.isPrivate,
-			isRequire: values?.isRequire,
-			isUnique: values?.isUnique
+		super(values?.name ?? '', values?.type ?? 'text', {
+			isPrivate: values?.private,
+			required: values?.required,
+			unique: values?.unique
 		});
 		// default setting base on subType
 		this.minLength = values?.minLength ?? 0;
@@ -162,12 +151,10 @@ export class MediaTypeSetting extends TypeSetting {
 		subType: MediaContentTypes,
 		values?: Partial<MediaTypeSetting>
 	) {
-		super({
-			name: values?.name ?? '',
-			type: values?.type ?? 'media',
-			isPrivate: values?.isPrivate,
-			isRequire: values?.isRequire,
-			isUnique: values?.isUnique
+		super(values?.name ?? '', values?.type ?? 'media', {
+			isPrivate: values?.private,
+			required: values?.required,
+			unique: values?.unique
 		});
 		this.mediaExtension = '';
 		this.minSize = 0;
@@ -222,9 +209,9 @@ export class MediaTypeSetting extends TypeSetting {
 			values.baseSettings.subType as MediaContentTypes,
 			{
 				name: values.baseSettings.attributeName,
-				isRequire: values.advancedSettings.required,
-				isUnique: values.advancedSettings.unique,
-				isPrivate: values.advancedSettings.private,
+				required: values.advancedSettings.required,
+				unique: values.advancedSettings.unique,
+				private: values.advancedSettings.private,
 				maxLength: values.advancedSettings.maxLength,
 				minLength: values.advancedSettings.minLength,
 				maxSize: values.advancedSettings.maxSize,
@@ -236,122 +223,143 @@ export class MediaTypeSetting extends TypeSetting {
 	}
 }
 
-export class PostTypeSetting extends TypeSetting {
-	public comment: boolean;
-	public reaction: boolean;
+interface PostCollectionSetting {
+	comment?: boolean;
+	reaction?: boolean;
+}
 
-	constructor() {
-		super();
-		this.type = 'post';
-		this.comment = true;
-		this.reaction = true;
+interface TypeSettingProps {
+	required?: boolean;
+	unique?: boolean;
+	isPrivate?: boolean;
+}
+export class PostTypeSetting extends TypeSetting {
+	public category?: string;
+	public tags?: string[];
+	public comment?: boolean;
+	public reaction?: boolean;
+
+	constructor(
+		title: string,
+		advancedOption?: TypeSettingProps,
+		baseOptions?: PostCollectionSetting
+	) {
+		super(title, 'post', {
+			required: advancedOption?.required ?? false,
+			unique: advancedOption?.unique ?? false,
+			isPrivate: advancedOption?.isPrivate ?? false
+		});
+		if (baseOptions) {
+			this.comment = baseOptions.comment;
+			this.reaction = baseOptions.reaction;
+		}
 	}
 }
 
 export class PostsTypeSetting extends TypeSetting {
-	constructor() {
-		super();
-		this.type = 'posts';
+	// no settings yet
+	constructor(name: string, values: Partial<PostsTypeSetting>) {
+		super(name, 'posts');
 	}
 }
 
-export class DocumentTypeSetting extends TypeSetting {
-	private _documentExtension: DocumentExtensions;
-	private _maxSize: number;
-	constructor() {
-		super();
-		this.type = DocumentSchema.type;
-		this._documentExtension = DocumentSchema.extension;
-		this._maxSize = DocumentSchema.maxSize;
-	}
+// export class DocumentTypeSetting extends TypeSetting {
+// 	private _documentExtension: DocumentExtensions;
+// 	private _maxSize: number;
+// 	constructor() {
+// 		super();
+// 		this.type = DocumentSchema.type;
+// 		this._documentExtension = DocumentSchema.extension;
+// 		this._maxSize = DocumentSchema.maxSize;
+// 	}
 
-	public set documentExtension(value: DocumentExtensions) {
-		this._documentExtension = value;
-	}
+// 	public set documentExtension(value: DocumentExtensions) {
+// 		this._documentExtension = value;
+// 	}
 
-	public set maxSize(value: number) {
-		this._maxSize = value;
-	}
-}
+// 	public set maxSize(value: number) {
+// 		this._maxSize = value;
+// 	}
+// }
 
-export class DateTypeSetting extends TypeSetting {
-	private _format: DateFormats;
-	constructor() {
-		super();
-		this.type = DateSchema.type;
-		this._format = DateSchema.format;
-	}
+// export class DateTypeSetting extends TypeSetting {
+// 	private _format: DateFormats;
+// 	constructor() {
+// 		super();
+// 		this.type = DateSchema.type;
+// 		this._format = DateSchema.format;
+// 	}
 
-	public set format(value: DateFormats) {
-		this._format = value;
-	}
-}
+// 	public set format(value: DateFormats) {
+// 		this._format = value;
+// 	}
+// }
 
-export class NumberTypeSetting extends TypeSetting {
-	private _min: number;
-	private _max: number;
-	constructor() {
-		super();
-		this.type = NumberSchema.type;
-		this._min = NumberSchema.min;
-		this._max = NumberSchema.max;
-	}
+// export class NumberTypeSetting extends TypeSetting {
+// 	private _min: number;
+// 	private _max: number;
+// 	constructor() {
+// 		super();
+// 		this.type = NumberSchema.type;
+// 		this._min = NumberSchema.min;
+// 		this._max = NumberSchema.max;
+// 	}
 
-	public set min(value: number) {
-		this._min = value;
-	}
+// 	public set min(value: number) {
+// 		this._min = value;
+// 	}
 
-	public set max(value: number) {
-		this._max = value;
-	}
-}
+// 	public set max(value: number) {
+// 		this._max = value;
+// 	}
+// }
 
-export class DecimalTypeSetting extends TypeSetting {
-	private _min: number;
-	private _max: number;
-	private _precision: [number, number];
-	constructor() {
-		super();
-		this.type = DecimalSchema.type;
-		this._min = DecimalSchema.min;
-		this._max = DecimalSchema.max;
-		this._precision = DecimalSchema.precision;
-	}
+// export class DecimalTypeSetting extends TypeSetting {
+// 	private _min: number;
+// 	private _max: number;
+// 	private _precision: [number, number];
+// 	constructor() {
+// 		super();
+// 		this.type = DecimalSchema.type;
+// 		this._min = DecimalSchema.min;
+// 		this._max = DecimalSchema.max;
+// 		this._precision = DecimalSchema.precision;
+// 	}
 
-	public set min(value: number) {
-		this._min = value;
-	}
+// 	public set min(value: number) {
+// 		this._min = value;
+// 	}
 
-	public set max(value: number) {
-		this._max = value;
-	}
+// 	public set max(value: number) {
+// 		this._max = value;
+// 	}
 
-	public set precision(value: [number, number]) {
-		this._precision = value;
-	}
-}
+// 	public set precision(value: [number, number]) {
+// 		this._precision = value;
+// 	}
+// }
 
-export class BooleanTypeSetting {
-	private _isRequire: boolean = false;
-	private _private: boolean = false;
+// export class BooleanTypeSetting {
+// 	private _isRequire: boolean = false;
+// 	private _private: boolean = false;
 
-	public set isRequire(value: boolean) {
-		this._isRequire = value;
-	}
+// 	public set isRequire(value: boolean) {
+// 		this._isRequire = value;
+// 	}
 
-	public set private(value: boolean) {
-		this._private = value;
-	}
-}
+// 	public set private(value: boolean) {
+// 		this._private = value;
+// 	}
+// }
 
-export class DynamicTypeSetting extends TypeSetting {
-	private _content: unknown = {};
+// export class DynamicTypeSetting extends TypeSetting {
+// 	private _content: unknown = {};
 
-	constructor() {
-		super();
-	}
+// 	constructor() {
+// 		super();
+// 	}
 
-	public set content(value: unknown) {
-		this._content = value;
-	}
-}
+// 	public set content(value: unknown) {
+// 		this._content = value;
+// 	}
+// }

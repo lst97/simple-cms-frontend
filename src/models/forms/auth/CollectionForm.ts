@@ -1,9 +1,10 @@
 import { SupportedCollectionKind } from '../../share/collection/Collection';
 import { CollectionAttribute } from '../../share/collection/CollectionAttributes';
 interface CollectionFormProps {
-	kind: 'collection' | 'post' | 'posts';
+	kind: SupportedCollectionKind;
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
+	ref?: string;
 }
 
 export interface CollectionInfo {
@@ -13,9 +14,10 @@ export interface CollectionInfo {
 }
 
 export class CollectionForm implements CollectionFormProps {
-	kind: 'collection' | 'post' | 'posts';
+	kind: SupportedCollectionKind;
 	info: CollectionInfo;
 	attributes: CollectionAttribute[];
+	ref?: string;
 
 	constructor(kind: SupportedCollectionKind) {
 		this.kind = kind;

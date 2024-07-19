@@ -287,7 +287,7 @@ export const PostsEditor = (props: {
 		} else {
 			setCollections(posts);
 		}
-	}, [slug]);
+	}, [slug, posts]);
 
 	const { selectedPost, setSelectedPost } =
 		useState<ICollectionDbModel | null>(null);

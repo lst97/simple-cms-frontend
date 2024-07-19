@@ -24,6 +24,7 @@ import { useContext, useEffect, useState } from 'react';
 import { EditAttributeDialog } from './CollectionComponents';
 import {
 	CollectionDbModel,
+	ICollectionDbModel,
 	SupportedCollectionKind
 } from '../../../models/share/collection/Collection';
 import { CollectionContext } from '../../../context/CollectionContext';
@@ -34,7 +35,8 @@ import {
 import { ConfirmationDialog, PlainDialog } from '../../common/dialogs/Dialogs';
 import {
 	CollectionApiService,
-	EndpointApiService
+	EndpointApiService,
+	PostsApiService
 } from '../../../services/ApiService';
 import { BaseContent } from '../../../models/share/collection/AttributeContents';
 import AttributeTypesGrid from './AttributeTypesGrid';
@@ -69,6 +71,22 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 	const handleEditAttribute = (attribute: CollectionAttributeDbModel) => {
 		setSelectedAttribute(attribute);
 	};
+
+	const [postsCollectionTableAttributes, setPostsCollectionTableAttributes] =
+		useState<ICollectionDbModel[]>([]);
+
+	useEffect(() => {
+		if (collection.kind === 'posts') {
+			const fetchBasicPostsInfo = async () => {
+				const postsCollections = await PostsApiService.getPostsBySlug(
+					collection.slug
+				);
+				setPostsCollectionTableAttributes(postsCollections);
+			};
+
+			fetchBasicPostsInfo();
+		}
+	}, [collection]);
 
 	const handleAddAttribute = async (settings: AttributeInfoFormValues) => {
 		if (!pendingAddAttributeType) return;
@@ -246,7 +264,12 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 			);
 		} else if (kind === 'posts') {
 			// render the posts table
-			return <PostsCollectionAttributesViewer slug={collection.slug} />;
+			return (
+				<PostsCollectionAttributesViewer
+					slug={collection.slug}
+					posts={postsCollectionTableAttributes}
+				/>
+			);
 		} else {
 			return <Typography variant="body1">No fields added yet</Typography>;
 		}
@@ -333,6 +356,20 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 				content={
 					<CreateCollectionStepper
 						kind="post"
+						onSubmitted={(_) => {
+							if (collection.kind === 'posts') {
+								// the new post is under a posts collection
+								const fetchBasicPostsInfo = async () => {
+									setPostsCollectionTableAttributes(
+										await PostsApiService.getPostsBySlug(
+											collection.slug
+										)
+									);
+								};
+
+								fetchBasicPostsInfo();
+							}
+						}}
 						option={{ slug: collection.slug }}
 					/>
 				}

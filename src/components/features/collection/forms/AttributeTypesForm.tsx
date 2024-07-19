@@ -105,9 +105,9 @@ export class AttributeSettingsHelper {
 			values.baseSettings.subType as TextContentTypes,
 			{
 				name: values.baseSettings.attributeName,
-				isRequire: values.advancedSettings.required,
-				isUnique: values.advancedSettings.unique,
-				isPrivate: values.advancedSettings.private,
+				required: values.advancedSettings.required,
+				unique: values.advancedSettings.unique,
+				private: values.advancedSettings.private,
 				maxLength: values.advancedSettings.maxLength,
 				minLength: values.advancedSettings.minLength
 			}

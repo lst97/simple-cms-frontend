@@ -1,18 +1,14 @@
 import { CollectionAttributeDbModel } from './CollectionAttributes';
 
 export type SupportedCollectionKind = 'collection' | 'post' | 'posts';
-export interface PostCollectionSettingProps {
-	comment: boolean;
-	reaction: boolean;
-}
 export interface ICollectionDbModel {
 	kind: SupportedCollectionKind;
 	username: string;
 	collectionName: string;
 	description?: string;
 	slug: string;
-	setting?: PostCollectionSettingProps;
-	attributes: CollectionAttributeDbModel[] | ICollectionDbModel[];
+	ref?: string;
+	attributes: CollectionAttributeDbModel[];
 	createdAt: string;
 	updatedAt: string;
 }
@@ -25,8 +21,8 @@ export class CollectionDbModel {
 	collectionName!: string;
 	description!: string;
 	slug!: string;
-	setting!: PostCollectionSettingProps;
-	attributes: (CollectionAttributeDbModel | CollectionDbModel)[] = [];
+	ref!: string;
+	attributes: CollectionAttributeDbModel[] = [];
 	createdAt!: string;
 	updatedAt!: string;
 	_id!: string;
