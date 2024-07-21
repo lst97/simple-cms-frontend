@@ -48,6 +48,7 @@ import {
 	ICollectionDbModel
 } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
+import { ConfirmationDialog } from '../../common/dialogs/Dialogs';
 const PlainTextEditor = (props: {
 	value: string;
 	onChange: (value: string) => void;
@@ -262,18 +263,21 @@ const FilesUploader = (props: {
 	);
 };
 
+type PostsCollectionAttributeActionType = 'edit' | 'delete';
 export const PostsEditor = (props: {
 	slug: string; // PostsCollectionSlug
 	posts?: ICollectionDbModel[];
+	onSelect?: (
+		value: ICollectionDbModel,
+		action: PostsCollectionAttributeActionType
+	) => void;
 	onChange?: (value: ICollectionDbModel[]) => void;
 }) => {
-	const { slug, posts, onChange } = props;
+	const { slug, posts, onSelect, onChange } = props;
 
 	const [postsCollection, setPostsCollection] = useState<
 		ICollectionDbModel[] | null
 	>(null);
-
-	const [addPostDialogOpen, setAddPostDialogOpen] = useState(false);
 
 	const [collections, setCollections] = useState<ICollectionDbModel[]>([]); // get the basic info without post attributes
 
@@ -289,78 +293,112 @@ export const PostsEditor = (props: {
 		}
 	}, [slug, posts]);
 
-	const { selectedPost, setSelectedPost } =
+	const [selectedPostToDelete, setSelectedPostToDelete] =
 		useState<ICollectionDbModel | null>(null);
 
+	const [selectedPostToEdit, setSelectedPostToEdit] =
+		useState<ICollectionDbModel | null>(null);
+
+	const handleDelete = (post: ICollectionDbModel) => {
+		const deletePostUnderPostsCollection = async () => {
+			await PostsApiService.deletePostBySlug(post.slug);
+			const updatedCollections = collections.filter(
+				(collection) => collection._id !== post._id
+			);
+			setCollections(updatedCollections);
+			onChange?.(updatedCollections);
+		};
+
+		deletePostUnderPostsCollection();
+	};
+
 	return (
-		<TableContainer component={Paper}>
-			<Table sx={{ minWidth: 650 }} aria-label="simple table">
-				<TableHead>
-					<TableRow>
-						<TableCell>Slug</TableCell>
-						<TableCell align="right">Author</TableCell>
-						<TableCell align="right">Categories</TableCell>
-						<TableCell align="right">Tags</TableCell>
-						<TableCell align="right">Comments</TableCell>
-						<TableCell align="right">Date</TableCell>
-						<TableCell align="right">Actions</TableCell>
-					</TableRow>
-				</TableHead>
-				<TableBody>
-					{collections.map((post) => (
-						<TableRow
-							key={`${
-								(
-									post
-										.attributes[0] as CollectionAttributeDbModel
-								).setting._id
-							}`}
-							sx={{
-								'&:last-child td, &:last-child th': {
-									border: 0
-								}
-							}}
-						>
-							<TableCell component="th" scope="row">
-								{`${post.slug}`}
-							</TableCell>
-							<TableCell align="right">
-								{`${post.username}`}
-							</TableCell>
-							<TableCell align="right">
-								{'Not implemented'}
-							</TableCell>
-							<TableCell align="right">
-								{'Not implemented'}
-							</TableCell>
-							<TableCell align="right">
-								{'Not implemented'}
-							</TableCell>
-							<TableCell align="right">
-								{post.createdAt}
-							</TableCell>
-							<TableCell align="right">
-								<Button
-									variant="contained"
-									onClick={() => {
-										setSelectedPost(post);
-									}}
-								>
-									Edit
-								</Button>
-								<Button
-									variant="outlined"
-									color="error"
-									onClick={() => {}}
-								>
-									Delete
-								</Button>
-							</TableCell>
+		<>
+			<TableContainer component={Paper}>
+				<Table sx={{ minWidth: 650 }} aria-label="simple table">
+					<TableHead>
+						<TableRow>
+							<TableCell>Slug</TableCell>
+							<TableCell align="right">Author</TableCell>
+							<TableCell align="right">Categories</TableCell>
+							<TableCell align="right">Tags</TableCell>
+							<TableCell align="right">Comments</TableCell>
+							<TableCell align="right">Date</TableCell>
+							<TableCell align="right">Actions</TableCell>
 						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		</TableContainer>
+					</TableHead>
+					<TableBody>
+						{collections.map((post) => (
+							<TableRow
+								key={`${
+									(
+										post
+											.attributes[0] as CollectionAttributeDbModel
+									).setting._id
+								}`}
+								sx={{
+									'&:last-child td, &:last-child th': {
+										border: 0
+									}
+								}}
+							>
+								<TableCell component="th" scope="row">
+									{`${post.slug}`}
+								</TableCell>
+								<TableCell align="right">
+									{`${post.username}`}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{'Not implemented'}
+								</TableCell>
+								<TableCell align="right">
+									{post.createdAt}
+								</TableCell>
+								<TableCell align="right">
+									<Button
+										variant="contained"
+										onClick={() => {
+											setSelectedPostToEdit(post);
+										}}
+									>
+										Edit
+									</Button>
+									<Button
+										variant="outlined"
+										color="error"
+										onClick={() => {
+											setSelectedPostToDelete(post);
+										}}
+									>
+										Delete
+									</Button>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</TableContainer>
+
+			{selectedPostToDelete && (
+				<ConfirmationDialog
+					open={selectedPostToDelete !== null}
+					title="Confirmation"
+					content={`Delete post ${selectedPostToDelete.collectionName}?`}
+					onConfirm={() => {
+						handleDelete(selectedPostToDelete);
+					}}
+					onClose={() => {
+						setSelectedPostToDelete(null);
+					}}
+				/>
+			)}
+		</>
 	);
 };
 

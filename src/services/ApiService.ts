@@ -356,6 +356,26 @@ export class PostsApiService extends ApiResultIndicator {
 			return [];
 		}
 	}
+
+	static async deletePostBySlug(
+		slug: string,
+		...errorHandlers: IApiErrorHandler[]
+	) {
+		try {
+			const response = await ApiServiceInstance().delete(
+				formatRoutes(ApiConfig.instance.routes.deletePostBySlug, {
+					slug: slug
+				})
+			);
+			return response.data;
+		} catch (error) {
+			defaultApiErrorHandler.handleError(error);
+			for (const errorHandler of errorHandlers) {
+				errorHandler.handleError(error);
+			}
+			return [];
+		}
+	}
 }
 
 export class AuthApiService extends ApiResultIndicator {

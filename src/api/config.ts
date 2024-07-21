@@ -6,6 +6,7 @@ interface RoutesUrls {
 	createPostsCollection: string;
 	createPostUnderPostsCollection: string;
 	createPost: string;
+	fetchEndpointBySlug: string;
 	fetchCollections: string;
 	fetchCollection: string;
 	fetchPostsCollection: string;
@@ -15,11 +16,11 @@ interface RoutesUrls {
 	updateCollectionAttributes: string;
 	updateCollectionAttribute: string;
 	deleteCollectionAttribute: string;
-	addCollectionAttribute: string;
 	deleteCollection: string;
+	deletePostBySlug: string;
+	addCollectionAttribute: string;
 	login: string;
 	register: string;
-	fetchEndpointBySlug: string;
 }
 /**
  * Represents the configuration for the API.
@@ -78,6 +79,7 @@ export class ApiConfig {
 			addCollectionAttribute: `${baseUrl}/collections/{slug}/attribute`,
 			deleteCollectionAttribute: `${baseUrl}/collections/{slug}/attributes/{attributeId}`,
 			deleteCollection: `${baseUrl}/collections/{slug}`,
+			deletePostBySlug: `${baseUrl}/posts/{slug}`,
 			login: `${baseUrl}/auth/login`,
 			register: `${baseUrl}/auth/register`,
 			fetchEndpointBySlug: `${baseUrl}/endpoints/{slug}`

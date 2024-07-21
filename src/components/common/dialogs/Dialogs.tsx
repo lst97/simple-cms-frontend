@@ -9,15 +9,15 @@ import React from 'react';
 
 export interface DialogBaseProps {
 	open: boolean;
-	onFinish: (form: Map<string, unknown>) => void;
-	onClose: () => void;
+	onFinish?: (form: Map<string, unknown>) => void;
+	onClose?: () => void;
 }
 
 interface ConfirmationDialogProps extends DialogBaseProps {
-	isConfirmDisabled?: boolean;
-	onConfirm: () => void;
 	title: string;
 	content: React.ReactNode | string;
+	onConfirm: () => void;
+	isConfirmDisabled?: boolean;
 }
 export const ConfirmationDialog = (props: ConfirmationDialogProps) => {
 	const { open, onClose, onConfirm, title, content, isConfirmDisabled } =

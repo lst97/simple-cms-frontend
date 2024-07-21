@@ -13,13 +13,9 @@ import {
 	CollectionAttributeDbModel
 } from '../../../models/share/collection/CollectionAttributes';
 import {
-	AttributeSettingTypes,
 	MediaTypeSettingDbModel,
-	TextTypeSetting,
 	TextTypeSettingDbModel,
-	TypeSetting,
-	TypeSettingDbModel
-} from '../../../models/share/collection/AttributeTypeSettings';
+	TypeSetting} from '../../../models/share/collection/AttributeTypeSettings';
 import { useContext, useEffect, useState } from 'react';
 import { EditAttributeDialog } from './CollectionComponents';
 import {
@@ -106,8 +102,8 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 			const attributeToAdd: CollectionAttributeDbModel | undefined =
 				updatedCollection.attributes.find(
 					(a) =>
-						(a.setting as TypeSettingDbModel).name ===
-						(newAttribute.setting as TextTypeSetting).name
+						(a.setting).name ===
+						(newAttribute.setting).name
 				) as CollectionAttributeDbModel;
 
 			if (attributeToAdd) {
@@ -219,7 +215,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 										}
 										, Sub-Type:{' '}
 										{getSubTypeName(
-											attribute as CollectionAttributeDbModel
+											attribute
 										)}
 									</Typography>
 								</div>
@@ -238,7 +234,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 											color="primary"
 											onClick={() => {
 												handleEditAttribute(
-													attribute as CollectionAttributeDbModel
+													attribute
 												);
 											}}
 										>
@@ -249,7 +245,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 											color="warning"
 											onClick={() => {
 												handlePendingDeleteAttribute(
-													attribute as CollectionAttributeDbModel
+													attribute
 												);
 											}}
 										>

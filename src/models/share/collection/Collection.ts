@@ -2,6 +2,7 @@ import { CollectionAttributeDbModel } from './CollectionAttributes';
 
 export type SupportedCollectionKind = 'collection' | 'post' | 'posts';
 export interface ICollectionDbModel {
+	_id: string;
 	kind: SupportedCollectionKind;
 	username: string;
 	collectionName: string;
