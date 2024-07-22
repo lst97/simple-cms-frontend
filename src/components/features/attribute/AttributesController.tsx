@@ -1,31 +1,44 @@
 import { Box, Button, Paper, Typography } from '@mui/material';
 import { useContext } from 'react';
 import { CollectionContext } from '../../../context/CollectionContext';
-import AttributeContentEditor from './AttributeContentEditor';
+import {
+	AttributeContentEditor,
+	PostAttributeContentEditor
+} from './AttributeContentEditor';
 import { CollectionApiService } from '../../../services/ApiService';
 import { LoadingIndicatorContext } from '@lst97/react-common-accessories';
-import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
+import { ICollectionDbModel } from '../../../models/share/collection/Collection';
 
-export const AttributesController = ({
-	selectedCollectionIndex
-}: {
-	selectedCollectionIndex: number;
+const AttributesController = (props: {
+	selectedCollection: ICollectionDbModel;
 }) => {
 	const { collections } = useContext(CollectionContext);
+	const { selectedCollection } = props;
+
+	const selectedCollectionIndex = collections.findIndex(
+		(collection) => collection.slug === selectedCollection.slug
+	);
 
 	const { showIndicator } = useContext(LoadingIndicatorContext)!;
 	CollectionApiService.useIndicator(showIndicator);
 
 	const handlePublish = () => {
 		const publishCollection = async () => {
-			await CollectionApiService.updateCollectionAttributes(
-				collections[selectedCollectionIndex].slug,
-				collections[selectedCollectionIndex]
-					.attributes as CollectionAttributeDbModel[]
+			const updatedCollection = collections.find((collection) =>
+				collection.attributes.find(
+					(attribute) =>
+						attribute.content.value === selectedCollection.slug
+				)
 			);
+			if (updatedCollection) {
+				await CollectionApiService.updateCollectionAttributes(
+					updatedCollection.slug,
+					updatedCollection.attributes
+				);
+			}
 		};
 
-		if (collections[selectedCollectionIndex].kind === 'collection') {
+		if (selectedCollection.kind === 'collection' || 'post') {
 			publishCollection();
 		}
 	};
@@ -35,27 +48,37 @@ export const AttributesController = ({
 			<Paper sx={{ m: 4 }}>
 				<Box sx={{ p: 1 }}>
 					<Typography variant="h4">
-						{collections[selectedCollectionIndex].collectionName}
+						{selectedCollection.collectionName}
 					</Typography>
 					<Typography variant="body2">
-						{collections[selectedCollectionIndex].description}
+						{selectedCollection.description}
 					</Typography>
 					<Typography variant="subtitle2" sx={{ color: 'gray' }}>
-						{collections[selectedCollectionIndex].slug}
+						{selectedCollection.slug}
 					</Typography>
 				</Box>
 
-				{collections[selectedCollectionIndex].attributes.map(
-					(attribute, index) => (
+				{selectedCollection.kind === 'collection' &&
+					selectedCollection.attributes.map((attribute, index) => (
 						<AttributeContentEditor
-							key={'subtypes_' + index}
-							selectedCollectionIndex={selectedCollectionIndex}
-							selectedAttributeIndex={index}
-							slug={collections[selectedCollectionIndex].slug}
+							key={attribute._id}
+							selectedIndies={{
+								collectionIndex: selectedCollectionIndex,
+								attributeIndex: index
+							}}
+							collection={selectedCollection}
 							attribute={attribute}
 						/>
-					)
-				)}
+					))}
+
+				{selectedCollection.kind === 'post' &&
+					selectedCollection.attributes.map((attribute) => (
+						<PostAttributeContentEditor
+							key={attribute._id}
+							postSlug={selectedCollection.slug}
+							attribute={attribute}
+						/>
+					))}
 			</Paper>
 			<Button variant="contained" sx={{ m: 4 }} onClick={handlePublish}>
 				Publish
@@ -63,3 +86,5 @@ export const AttributesController = ({
 		</>
 	);
 };
+
+export { AttributesController };

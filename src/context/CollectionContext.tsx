@@ -30,9 +30,9 @@ const CollectionProvider = ({ children }: Props) => {
 	);
 
 	const fetchCollections = async () => {
-		const collections = (
-			(await CollectionApiService.getCollections()) as CollectionDbModel[]
-		).filter((collection) => collection.ref === undefined);
+		const collections =
+			(await CollectionApiService.getCollections()) as CollectionDbModel[];
+
 		const postsCollections =
 			(await PostsApiService.getPostsCollections()) as CollectionDbModel[];
 		setCollections([...collections, ...postsCollections]);

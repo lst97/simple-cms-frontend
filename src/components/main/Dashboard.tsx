@@ -159,47 +159,55 @@ export default function MiniDrawer({
 					</Typography>
 				) : null}
 				<List>
-					{collections.map((collection, index) => (
-						<ListItem
-							key={collection.slug}
-							disablePadding
-							sx={{ display: 'block' }}
-						>
-							<ListItemButton
-								sx={{
-									minHeight: 48,
-									justifyContent: open ? 'initial' : 'center',
-									px: 2.5
-								}}
-								selected={selectedItem.collections === index}
-								onClick={() => {
-									setSelectedItem({
-										...selectedItem,
-										collections: index,
-										actions: -1
-									});
-								}}
-							>
-								<ListItemIcon
-									sx={{
-										minWidth: 0,
-										mr: open ? 3 : 'auto',
-										justifyContent: 'center'
-									}}
+					{collections.map((collection, index) => {
+						return (
+							!collection.ref && (
+								<ListItem
+									key={collection.slug}
+									disablePadding
+									sx={{ display: 'block' }}
 								>
-									{index % 2 === 0 ? (
-										<InboxIcon />
-									) : (
-										<MailIcon />
-									)}
-								</ListItemIcon>
-								<ListItemText
-									primary={collection.collectionName}
-									sx={{ opacity: open ? 1 : 0 }}
-								/>
-							</ListItemButton>
-						</ListItem>
-					))}
+									<ListItemButton
+										sx={{
+											minHeight: 48,
+											justifyContent: open
+												? 'initial'
+												: 'center',
+											px: 2.5
+										}}
+										selected={
+											selectedItem.collections === index
+										}
+										onClick={() => {
+											setSelectedItem({
+												...selectedItem,
+												collections: index,
+												actions: -1
+											});
+										}}
+									>
+										<ListItemIcon
+											sx={{
+												minWidth: 0,
+												mr: open ? 3 : 'auto',
+												justifyContent: 'center'
+											}}
+										>
+											{index % 2 === 0 ? (
+												<InboxIcon />
+											) : (
+												<MailIcon />
+											)}
+										</ListItemIcon>
+										<ListItemText
+											primary={collection.collectionName}
+											sx={{ opacity: open ? 1 : 0 }}
+										/>
+									</ListItemButton>
+								</ListItem>
+							)
+						);
+					})}
 				</List>
 				<Divider />
 				{open === true ? (
@@ -258,7 +266,9 @@ export default function MiniDrawer({
 				) : null}
 				{selectedItem.collections !== -1 ? (
 					<AttributesController
-						selectedCollectionIndex={selectedItem.collections}
+						selectedCollection={
+							collections[selectedItem.collections]
+						}
 					/>
 				) : null}
 				{children}

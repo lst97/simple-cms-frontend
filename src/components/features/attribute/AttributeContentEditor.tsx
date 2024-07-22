@@ -7,6 +7,7 @@ import {
 } from '../../../models/share/collection/AttributeTypeSettings';
 import {
 	Button,
+	Drawer,
 	ImageList,
 	ImageListItem,
 	ImageListItemBar,
@@ -49,6 +50,7 @@ import {
 } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
 import { ConfirmationDialog } from '../../common/dialogs/Dialogs';
+import { AttributesController } from './AttributesController';
 const PlainTextEditor = (props: {
 	value: string;
 	onChange: (value: string) => void;
@@ -75,7 +77,7 @@ const ReachTextEditor = (props: {
 };
 
 export const GalleryEditor = (props: {
-	slug: string;
+	collection: ICollectionDbModel;
 	attribute: CollectionAttributeDbModel;
 	value?: IMediaContent[];
 	onChange?: (value: IMediaContent[]) => void;
@@ -143,7 +145,10 @@ export const GalleryEditor = (props: {
 					onClose={onClose}
 				/>
 			)}
-			<FilesUploader slug={props.slug} attribute={props.attribute} />
+			<FilesUploader
+				collection={props.collection}
+				attribute={props.attribute}
+			/>
 		</>
 	);
 };
@@ -154,7 +159,7 @@ export const GalleryEditor = (props: {
 // }
 type FilePondValue = (string | FilePondInitialFile | Blob)[];
 const FilesUploader = (props: {
-	slug: string;
+	collection: ICollectionDbModel;
 	attribute: CollectionAttributeDbModel;
 	value?: FilePondValue;
 	onChange?: (value: FilePondValue) => void;
@@ -205,7 +210,7 @@ const FilesUploader = (props: {
 			request.open(
 				'PUT',
 				`${ApiServiceConfig.instance().baseUrl}/collections/${
-					props.slug
+					props.collection.slug
 				}/attributes/${
 					props.attribute._id
 				}?content=true&type=${mediaType}&sessionId=${sessionId}&total=${
@@ -330,12 +335,7 @@ export const PostsEditor = (props: {
 					<TableBody>
 						{collections.map((post) => (
 							<TableRow
-								key={`${
-									(
-										post
-											.attributes[0] as CollectionAttributeDbModel
-									).setting._id
-								}`}
+								key={`${post.attributes[0].setting._id}`}
 								sx={{
 									'&:last-child td, &:last-child th': {
 										border: 0
@@ -398,12 +398,29 @@ export const PostsEditor = (props: {
 					}}
 				/>
 			)}
+
+			{selectedPostToEdit && (
+				<Drawer
+					anchor="right"
+					PaperProps={{
+						sx: { width: 'calc(100% - 240px)', paddingTop: '64px' }
+					}}
+					open={selectedPostToEdit !== null}
+					onClose={() => {
+						setSelectedPostToEdit(null);
+					}}
+				>
+					<AttributesController
+						selectedCollection={selectedPostToEdit}
+					/>
+				</Drawer>
+			)}
 		</>
 	);
 };
 
 const PostEditor = (props: {
-	slug: string;
+	postsCollection: ICollectionDbModel;
 	post: ICollectionDbModel;
 	value?: ICollectionDbModel;
 	onChange?: (value: ICollectionDbModel) => void;
@@ -425,11 +442,12 @@ const PostEditor = (props: {
 	);
 };
 const AttributeEditorComponent = (props: {
-	slug: string;
+	collection: ICollectionDbModel;
 	attribute: CollectionAttributeDbModel;
-	selectedIndies: { collectionIndex: number; attributeIndex: number };
-	setCollections: React.Dispatch<React.SetStateAction<CollectionDbModel[]>>;
+	selectedIndies?: { collectionIndex: number; attributeIndex: number };
 }) => {
+	const { setCollections } = useContext(CollectionContext);
+
 	const textTypeComponents = {
 		long_text: PlainTextEditor,
 		short_text: PlainTextEditor,
@@ -463,18 +481,49 @@ const AttributeEditorComponent = (props: {
 					<EditorComponent
 						value={(props.attribute.content.value as string) ?? ''}
 						onChange={(value) => {
-							props.setCollections((prevCollections) => {
-								const updatedCollections = [...prevCollections];
+							if (props.selectedIndies) {
+								setCollections((prevCollections) => {
+									const updatedCollections = [
+										...prevCollections
+									];
 
-								(
 									updatedCollections[
-										props.selectedIndies.collectionIndex
+										props.selectedIndies!.collectionIndex
 									].attributes[
-										props.selectedIndies.attributeIndex
-									] as CollectionAttributeDbModel
-								).content.value = value;
-								return updatedCollections;
-							});
+										props.selectedIndies!.attributeIndex
+									].content.value = value;
+									return updatedCollections;
+								});
+							} else {
+								setCollections((prevCollections) => {
+									const updatedCollections = [
+										...prevCollections
+									];
+
+									const targetCollectionIndex =
+										updatedCollections.findIndex(
+											(collection) =>
+												collection.slug ===
+												props.collection.slug
+										);
+
+									const targetAttributeIndex =
+										updatedCollections[
+											targetCollectionIndex
+										].attributes.findIndex(
+											(attribute) =>
+												attribute._id ===
+												props.attribute._id
+										);
+
+									updatedCollections[
+										targetCollectionIndex
+									].attributes[
+										targetAttributeIndex
+									].content.value = value;
+									return updatedCollections;
+								});
+							}
 						}}
 					/>
 				</>
@@ -493,7 +542,7 @@ const AttributeEditorComponent = (props: {
 						{props.attribute.setting.name}
 					</Typography>
 					<EditorComponent
-						slug={props.slug}
+						collection={props.collection}
 						attribute={props.attribute}
 					/>
 				</>
@@ -506,29 +555,55 @@ const AttributeEditorComponent = (props: {
 };
 
 const AttributeContentEditor = ({
-	slug,
-	selectedCollectionIndex,
-	selectedAttributeIndex,
+	collection,
+	selectedIndies,
 	attribute
 }: {
-	slug: string;
-	selectedCollectionIndex: number;
-	selectedAttributeIndex: number;
-	attribute: CollectionAttributeDbModel | CollectionDbModel;
+	collection: ICollectionDbModel;
+	selectedIndies?: { collectionIndex: number; attributeIndex: number };
+	attribute: CollectionAttributeDbModel;
 }) => {
-	const { setCollections } = useContext(CollectionContext);
-
-	return (attribute as any).collectionName === undefined ? (
+	return (
 		<AttributeEditorComponent
-			slug={slug}
-			selectedIndies={{
-				collectionIndex: selectedCollectionIndex,
-				attributeIndex: selectedAttributeIndex
-			}}
-			attribute={attribute as CollectionAttributeDbModel}
-			setCollections={setCollections}
+			collection={collection}
+			selectedIndies={selectedIndies}
+			attribute={attribute}
 		/>
-	) : null;
+	);
 };
 
-export default AttributeContentEditor;
+const PostAttributeContentEditor = ({
+	postSlug,
+	attribute
+}: {
+	postSlug: string;
+	attribute: CollectionAttributeDbModel;
+}) => {
+	const { collections } = useContext(CollectionContext);
+	const [post, setPost] = useState<ICollectionDbModel | null>(null);
+
+	useEffect(() => {
+		const post = collections.find(
+			(collection) => collection.slug === postSlug
+		);
+		if (post) {
+			setPost(post);
+		}
+	}, [postSlug, collections]);
+
+	return (
+		<>
+			{post && (
+				<AttributeContentEditor
+					collection={post}
+					attribute={
+						post.attributes.find(
+							(attr) => attr._id === attribute._id
+						)!
+					}
+				/>
+			)}
+		</>
+	);
+};
+export { PostAttributeContentEditor, AttributeContentEditor };
