@@ -24,17 +24,27 @@ const AttributesController = (props: {
 
 	const handlePublish = () => {
 		const publishCollection = async () => {
-			const updatedCollection = collections.find((collection) =>
-				collection.attributes.find(
-					(attribute) =>
-						attribute.content.value === selectedCollection.slug
-				)
-			);
-			if (updatedCollection) {
-				await CollectionApiService.updateCollectionAttributes(
-					updatedCollection.slug,
-					updatedCollection.attributes
+			if (
+				selectedCollection.kind === 'collection' ||
+				selectedCollection.kind === 'post'
+			) {
+				const updatedCollection = collections.find(
+					(collection) => collection.slug === selectedCollection.slug
 				);
+				if (updatedCollection) {
+					await CollectionApiService.updateCollectionAttributes(
+						updatedCollection.slug,
+						updatedCollection.attributes
+					);
+				}
+			}
+
+			if (selectedCollection.kind === 'posts') {
+				// TODO: update posts attributes
+				// await CollectionApiService.updatePostsAttributes(
+				// 	selectedCollection.slug,
+				// 	selectedCollection.attributes
+				// );
 			}
 		};
 

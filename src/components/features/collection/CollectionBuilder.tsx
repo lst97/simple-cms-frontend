@@ -1,7 +1,16 @@
-import { Badge, Button, IconButton, Stack, Typography } from '@mui/material';
+import {
+	Badge,
+	Box,
+	Button,
+	Grid,
+	IconButton,
+	Paper,
+	Stack,
+	Typography
+} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CollectionViewer from './CollectionViewer';
-import { useContext, useState } from 'react';
+import { ReactNode, useContext, useEffect, useState } from 'react';
 import { CreateCollectionDialog } from './CollectionComponents';
 import {
 	AttributeSettingTypes,
@@ -125,6 +134,11 @@ export class CollectionBuilder implements ICollectionBuilder {
 }
 const CollectionBuilderComponent = () => {
 	const { collections, setCollections } = useContext(CollectionContext);
+	const [filteredCollections, setFilteredCollections] = useState(
+		collections.filter((collection) => collection.ref === undefined)
+	);
+
+	const [expendedPostsCollection, setExpendedPostsCollection] = useState('');
 
 	const [selectedCollection, setSelectedCollection] =
 		useState<CollectionDbModel | null>(null);
@@ -148,14 +162,123 @@ const CollectionBuilderComponent = () => {
 		);
 	};
 
+	const renderButtonsByPostsCollection = (
+		postsCollection: CollectionDbModel
+	): ReactNode => {
+		const postSlugs = postsCollection.attributes.map(
+			(attr) => attr.content.value
+		);
+
+		const posts: CollectionDbModel[] = [];
+		collections.forEach((collection) => {
+			if (postSlugs.includes(collection.slug)) {
+				posts.push(collection);
+			}
+		});
+
+		return (
+			<Box sx={{ marginLeft: '20px' }}>
+				{posts.map((post) => renderButton(post))}
+			</Box>
+		);
+	};
+
+	const handlePostsExpandClick = (slug: string) => {
+		console.log('handlePostsExpandClick', slug);
+		if (expendedPostsCollection === slug) {
+			setExpendedPostsCollection('');
+		} else {
+			setExpendedPostsCollection(slug);
+		}
+	};
+
+	const renderButton = (collection: CollectionDbModel) => {
+		const defaultButton = (
+			<Button
+				fullWidth
+				variant="text"
+				key={collection.slug}
+				sx={{ justifyContent: 'flex-start' }}
+				onClick={() => {
+					setSelectedCollection(collection);
+				}}
+			>
+				<Stack direction="column" spacing={1} alignItems="flex-start">
+					<Typography variant="body1">
+						{collection.collectionName}
+					</Typography>
+					<Typography variant="caption" color="text.secondary">
+						{collection.slug}
+					</Typography>
+				</Stack>
+			</Button>
+		);
+
+		switch (collection.kind) {
+			case 'posts':
+				return (
+					<>
+						<Grid container>
+							<Grid item xs={10}>
+								{defaultButton}
+							</Grid>
+							<Grid
+								item
+								xs={2}
+								container
+								alignItems="center"
+								justifyContent="center"
+							>
+								<Button
+									variant="text"
+									sx={{ height: '100%' }}
+									onClick={() => {
+										handlePostsExpandClick(collection.slug);
+									}}
+								>
+									{expendedPostsCollection === '' ? '▼' : '▲'}
+								</Button>
+							</Grid>
+						</Grid>
+						<>
+							{expendedPostsCollection !== ''
+								? renderButtonsByPostsCollection(collection)
+								: null}
+						</>
+					</>
+				);
+			default:
+				return defaultButton;
+		}
+	};
+
+	useEffect(() => {
+		setFilteredCollections(
+			collections.filter((collection) => collection.ref === undefined)
+		);
+	}, [collections]);
+
 	return (
-		<div>
-			<div className="flex flex-row h-full">
-				<div className="basis-1/4 bg-slate-100 w-full">
-					<div className="flex flex-col">
-						<div className="flex flex-row w-full gap-1 px-8 pt-8 pb-2 justify-between">
+		<Box>
+			<Grid container sx={{ height: '100%' }}>
+				<Grid item xs={3} component={Paper} elevation={0} square>
+					<Box
+						sx={{
+							display: 'flex',
+							flexDirection: 'column',
+							backgroundColor: '#f1f5f9' // bg-slate-100
+						}}
+					>
+						<Box
+							sx={{
+								display: 'flex',
+								justifyContent: 'space-between',
+								alignItems: 'center',
+								p: 2
+							}}
+						>
 							<Badge
-								badgeContent={collections.length}
+								badgeContent={filteredCollections.length}
 								color="primary"
 							>
 								<Typography variant="h6">COLLECTION</Typography>
@@ -163,46 +286,30 @@ const CollectionBuilderComponent = () => {
 							<IconButton>
 								<SearchIcon />
 							</IconButton>
-						</div>
+						</Box>
 
-						<div className="flex flex-col gap-2 mx-8">
-							{collections.map((collection) => (
-								<Button
-									variant="text"
-									key={collection.slug}
-									sx={{ justifyContent: 'flex-start' }}
-									onClick={() => {
-										setSelectedCollection(collection);
-									}}
-								>
-									<Stack
-										direction="column"
-										spacing={1}
-										textAlign="left"
-									>
-										<Typography variant="body1">
-											{collection.collectionName}
-										</Typography>
-										<Typography
-											variant="caption"
-											color="gray"
-										>
-											{collection.slug}
-										</Typography>
-									</Stack>
-								</Button>
+						<Box
+							sx={{
+								display: 'flex',
+								flexDirection: 'column',
+								gap: 2,
+								px: 2
+							}}
+						>
+							{filteredCollections.map((collection) => (
+								<>{renderButton(collection)}</>
 							))}
-						</div>
+						</Box>
 						<AddCollection />
-					</div>
-				</div>
-				<div className="basis-3/4 bg-slate-50 w-full">
+					</Box>
+				</Grid>
+				<Grid item xs={9} component={Paper} elevation={0} square>
 					{selectedCollection ? (
 						<CollectionViewer
 							slug={selectedCollection.slug}
-							onDeleted={(slug: string) => {
+							onDeleted={(slug) => {
 								setCollections(
-									collections.filter(
+									filteredCollections.filter(
 										(collection) => collection.slug !== slug
 									)
 								);
@@ -210,15 +317,15 @@ const CollectionBuilderComponent = () => {
 							}}
 						/>
 					) : null}
-				</div>
-			</div>
+				</Grid>
+			</Grid>
 
 			<CreateCollectionDialog
 				open={addCollectionDialogOpen}
 				onFinish={() => {}}
 				onClose={handleCloseAddCollectionDialog}
 			/>
-		</div>
+		</Box>
 	);
 };
 

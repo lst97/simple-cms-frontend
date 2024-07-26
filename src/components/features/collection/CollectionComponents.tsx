@@ -80,7 +80,7 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 					return col;
 				});
 
-				setCollections(updatedCollections as CollectionDbModel[]);
+				setCollections(updatedCollections);
 
 				handleEditAttributeDialogClose();
 			})

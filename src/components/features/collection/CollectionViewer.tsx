@@ -15,7 +15,8 @@ import {
 import {
 	MediaTypeSettingDbModel,
 	TextTypeSettingDbModel,
-	TypeSetting} from '../../../models/share/collection/AttributeTypeSettings';
+	TypeSetting
+} from '../../../models/share/collection/AttributeTypeSettings';
 import { useContext, useEffect, useState } from 'react';
 import { EditAttributeDialog } from './CollectionComponents';
 import {
@@ -48,7 +49,11 @@ import { ICollectionEndpoint } from '../../../models/share/endpoint/Endpoint';
 import { Config as ApiServiceConfig } from '@lst97/common-restful';
 import { PostsCollectionAttributesViewer } from '../attribute/PostsCollectionAttributesViewer';
 import { CreateCollectionStepper } from './CollectionStepper';
-const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
+const AttributesViewer = ({
+	collection
+}: {
+	collection: CollectionDbModel;
+}) => {
 	const [selectedAttribute, setSelectedAttribute] =
 		useState<CollectionAttributeDbModel | null>(null);
 	const [pendingDeleteAttribute, setPendingDeleteAttribute] =
@@ -101,9 +106,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 			const attributeToAdd: CollectionAttributeDbModel | undefined =
 				updatedCollection.attributes.find(
-					(a) =>
-						(a.setting).name ===
-						(newAttribute.setting).name
+					(a) => a.setting.name === newAttribute.setting.name
 				) as CollectionAttributeDbModel;
 
 			if (attributeToAdd) {
@@ -181,10 +184,9 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 
 	const renderAttributes = (kind: SupportedCollectionKind) => {
 		if (
-			kind === 'collection' &&
-			collection.attributes &&
-			collection.attributes.length !== 0 &&
-			(collection.attributes[0].setting as any).type !== undefined
+			(kind === 'collection' || kind === 'post') &&
+			collection.attributes?.length > 0 &&
+			collection.attributes[0].setting?.type !== undefined
 		) {
 			return (
 				<Stack direction="column" spacing={1}>
@@ -213,10 +215,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 												attribute.setting as unknown as TypeSetting
 											).type
 										}
-										, Sub-Type:{' '}
-										{getSubTypeName(
-											attribute
-										)}
+										, Sub-Type: {getSubTypeName(attribute)}
 									</Typography>
 								</div>
 								<div>
@@ -233,9 +232,7 @@ const FieldsViewer = ({ collection }: { collection: CollectionDbModel }) => {
 											variant="outlined"
 											color="primary"
 											onClick={() => {
-												handleEditAttribute(
-													attribute
-												);
+												handleEditAttribute(attribute);
 											}}
 										>
 											Edit
@@ -523,7 +520,7 @@ const CollectionViewer = ({
 							</Menu>
 						</div>
 					</div>
-					<FieldsViewer collection={collection} />
+					<AttributesViewer collection={collection} />
 					<ConfirmationDialog
 						open={pendingDeleteCollection !== null}
 						onClose={() => {
