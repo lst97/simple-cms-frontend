@@ -14,7 +14,6 @@ RUN npm install
 COPY . .
 
 RUN npm install -g tsc
-RUN npm install -g vite
 
 # Install serve to run the application
 RUN npm install -g serve
