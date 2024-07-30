@@ -1,19 +1,27 @@
-FROM node:20 AS builder
+# Use an official Node runtime as the base image
+FROM node:20-alpine
 
+# Set the working directory in the container
 WORKDIR /usr/src/app
 
+# Copy package.json and package-lock.json (if available)
 COPY package*.json ./
 
+# Install project dependencies
 RUN npm install
 
-COPY . ./
+# Copy project files and folders to the current working directory (i.e. 'app' folder)
+COPY . .
 
-FROM nginx:1.25.4-alpine-slim AS prod
+RUN npm install -g tsc
 
-COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+# Install serve to run the application
+RUN npm install -g serve
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Build the app
+RUN npm run build
 
 EXPOSE 1167
 
-CMD ["nginx", "-g", "daemon off;"]
+# Serve the app on port 5000
+CMD ["serve", "-s", "dist", "-l", "5000"]
