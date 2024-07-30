@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+    simple-cms-frontend:
+        image: lst97/simple-cms-frontend:dev
+        ports:
+            - '80:80'
+        expose:
+            - '80'
+        volumes:
+            - ~/app:/usr/src/app:ro
+
+volumes:
+    mongodb_data:
