@@ -6,10 +6,6 @@ COPY package*.json ./
 
 RUN npm install
 
-ENV PATH=/usr/local/lib/node_modules/typescript/bin:$PATH
-
-RUN tsc && vite build
-
 COPY . ./
 
 FROM nginx:1.25.4-alpine-slim AS prod
