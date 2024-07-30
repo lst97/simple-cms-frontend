@@ -49,10 +49,10 @@ interface ICollectionBuilder {
  * Data for creating a collection in the dialog.
  */
 export class CollectionBuilder implements ICollectionBuilder {
-	private form: CollectionForm = new CollectionForm();
+	private form: CollectionForm = new CollectionForm('collection');
 
 	reset(): this {
-		this.form = new CollectionForm();
+		this.form = new CollectionForm('collection');
 		return this;
 	}
 
@@ -85,35 +85,35 @@ export class CollectionBuilder implements ICollectionBuilder {
 		switch (setting.constructor) {
 			case TextTypeSetting:
 				this.form.attributes?.push(
-					new CollectionAttribute(
-						setting as TextTypeSetting,
-						new BaseContent()
-					)
+					new CollectionAttribute({
+						setting: setting as TextTypeSetting,
+						content: new BaseContent()
+					})
 				);
 				break;
 			case MediaTypeSetting:
 				this.form.attributes?.push(
-					new CollectionAttribute(
-						setting as MediaTypeSetting,
-						new BaseContent()
-					)
+					new CollectionAttribute({
+						setting: setting as MediaTypeSetting,
+						content: new BaseContent()
+					})
 				);
 				break;
 			case PostTypeSetting:
 				this.form.attributes?.push(
-					new CollectionAttribute(
-						setting as PostTypeSetting,
-						new BaseContent()
-					)
+					new CollectionAttribute({
+						setting: setting as PostTypeSetting,
+						content: new BaseContent()
+					})
 				);
 				break;
 
 			case PostsTypeSetting:
 				this.form.attributes?.push(
-					new CollectionAttribute(
-						setting as PostsTypeSetting,
-						new BaseContent()
-					)
+					new CollectionAttribute({
+						setting: setting as PostsTypeSetting,
+						content: new BaseContent()
+					})
 				);
 				break;
 			default:

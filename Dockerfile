@@ -1,20 +1,21 @@
-# Use an official Node.js runtime as the base image
-FROM node:20.0.0
+FROM node:20-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
-# Install the application dependencies
 RUN npm install
 
-# Copy the rest of the application code
+RUN npm run build
+
 COPY . ./
 
-# Expose the port the app runs on
+FROM nginx:1.25.4-alpine-slim AS prod
+
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 1167
 
-# Define the command to run the app
-CMD ["npm run dev"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -44,10 +44,7 @@ import { Config as ApiServiceConfig } from '@lst97/common-restful';
 import { v4 as uuidv4 } from 'uuid';
 import { IMediaContent } from '../../../models/share/collection/AttributeContents';
 import { ImageViewer } from '../../common/medias/ImageViewer';
-import {
-	CollectionDbModel,
-	ICollectionDbModel
-} from '../../../models/share/collection/Collection';
+import { ICollectionDbModel } from '../../../models/share/collection/Collection';
 import { PostsApiService } from '../../../services/ApiService';
 import { ConfirmationDialog } from '../../common/dialogs/Dialogs';
 import { AttributesController } from './AttributesController';

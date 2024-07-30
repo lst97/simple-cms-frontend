@@ -1,10 +1,7 @@
 import { Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { CreateCollectionStepper } from './CollectionStepper';
 import { useContext } from 'react';
-import {
-	TextTypeSetting,
-	TypeSetting
-} from '../../../models/share/collection/AttributeTypeSettings';
+import { TypeSetting } from '../../../models/share/collection/AttributeTypeSettings';
 import { CollectionAttributeDbModel } from '../../../models/share/collection/CollectionAttributes';
 import { CollectionApiService } from '../../../services/ApiService';
 import { CollectionDbModel } from '../../../models/share/collection/Collection';
@@ -24,7 +21,7 @@ interface EditAttributeDialogProps extends DialogBaseProps {
 export const CreateCollectionDialog = (props: DialogBaseProps) => {
 	const { onClose, open } = props;
 	const handleCreateCollectionDialogClose = () => {
-		onClose();
+		onClose?.();
 	};
 
 	return (
@@ -41,7 +38,7 @@ export const EditAttributeDialog = (props: EditAttributeDialogProps) => {
 	const { collections, setCollections } = useContext(CollectionContext);
 
 	const handleEditAttributeDialogClose = () => {
-		onClose();
+		onClose?.();
 	};
 
 	const handleSubmit = (setting: TypeSetting, attributeId?: string) => {

@@ -4,6 +4,13 @@ import react from '@vitejs/plugin-react-swc';
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [react()],
+	server: {
+		port: 1167,
+		host: true,
+		watch: {
+			usePolling: true
+		}
+	},
 	define: {
 		'process.env': process.env
 	}

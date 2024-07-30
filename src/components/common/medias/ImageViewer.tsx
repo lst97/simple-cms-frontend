@@ -16,7 +16,6 @@ export const ImageViewer = ({
 	baseUrl,
 	items,
 	selectedIndex,
-	onChange,
 	onClose
 }: {
 	baseUrl: string;

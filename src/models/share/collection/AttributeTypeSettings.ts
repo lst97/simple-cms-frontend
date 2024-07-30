@@ -1,16 +1,8 @@
 import { AttributeInfoFormValues } from '../../../components/features/collection/forms/AttributeTypesForm';
 import {
 	TextSchema,
-	CodeSchema,
 	MediaExtensions,
-	DocumentExtensions,
-	DocumentSchema,
-	DateFormats,
-	NumberSchema,
-	DecimalSchema,
-	DateSchema,
 	TextContentTypes,
-	CodeLanguageTypes,
 	MediaContentTypes,
 	ImageSchema,
 	AudioSchema,
@@ -258,7 +250,7 @@ export class PostTypeSetting extends TypeSetting {
 
 export class PostsTypeSetting extends TypeSetting {
 	// no settings yet
-	constructor(name: string, values: Partial<PostsTypeSetting>) {
+	constructor(name: string, _values: Partial<PostsTypeSetting>) {
 		super(name, 'posts');
 	}
 }

@@ -6,7 +6,6 @@ import { BaseContent } from './AttributeContents';
 import {
 	AttributeSettingTypes,
 	MediaTypeSetting,
-	TextTypeSetting,
 	TypeSetting,
 	TypeSettingDbModel
 } from './AttributeTypeSettings';

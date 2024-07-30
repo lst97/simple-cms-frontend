@@ -6,7 +6,6 @@ import { useFormik } from 'formik';
 import DebugFormik from '../../../debug/DebugFormik';
 import { useEffect } from 'react';
 
-export class CollectionBaseInfoFormControl {}
 export class CollectionBaseInfoFormValues {
 	collectionName: string = '';
 	collectionDescription: string = '';
@@ -23,7 +22,7 @@ const CollectionBaseInfoForm = (props: {
 	const formik = useFormik({
 		initialValues:
 			props.initialValues ?? new CollectionBaseInfoFormValues(),
-		onSubmit: (values) => {}
+		onSubmit: (_values) => {}
 	});
 
 	const extractSlug = (subdirectory: string) => {
