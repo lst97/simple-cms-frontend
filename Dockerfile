@@ -24,4 +24,4 @@ RUN npm run build
 EXPOSE 1167
 
 # Serve the app on port 5000
-CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:1167"]
+CMD [ "serve", "-s", "dist" ]
