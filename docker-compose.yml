@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-    simple-cms-frontend:
+    frontend:
         image: lst97/simple-cms-frontend:dev
         ports:
             - '1167:80'
