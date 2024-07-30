@@ -28,7 +28,7 @@ jobs:
                   username: ${{ secrets.SERVER_USERNAME }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   source: docker-compose.yml, Dockerfile
-                  target: ~/app
+                  target: ~/app/simple-cms-frontend
 
             - name: Deploy to server
               uses: appleboy/ssh-action@master
@@ -37,7 +37,7 @@ jobs:
                   username: ${{ secrets.SERVER_USERNAME }}
                   key: ${{ secrets.SERVER_SSH_KEY }}
                   script: |
-                      cd ~/app
+                      cd ~/app/simple-cms-frontend
                       docker-compose pull
                       docker-compose down
                       docker-compose up -d
