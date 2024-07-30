@@ -6,7 +6,7 @@ COPY package*.json ./
 
 RUN npm install
 
-ENV PATH /usr/local/lib/node_modules/typescript/bin:$PATH
+ENV PATH=/usr/local/lib/node_modules/typescript/bin:$PATH
 
 RUN tsc && vite build
 
