@@ -3,7 +3,7 @@ services:
     simple-cms-frontend:
         image: lst97/simple-cms-frontend:dev
         ports:
-            - '80:80'
+            - '1167:80'
         expose:
             - '80'
         volumes:
