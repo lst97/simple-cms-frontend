@@ -6,7 +6,7 @@ COPY package*.json ./
 
 RUN npm install
 
-RUN npm tsc && vite build
+RUN tsc && vite build
 
 COPY . ./
 
