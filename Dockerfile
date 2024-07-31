@@ -10,10 +10,12 @@ COPY package*.json ./
 # Install project dependencies
 RUN npm install
 
+# Copy project files and folders to the current working directory (i.e. 'app' folder)
+COPY . ./
+
 # Build the app
 RUN npm run build:docker
 
-# Copy project files and folders to the current working directory (i.e. 'app' folder)
 COPY . ./
 
 # Install serve to run the application
