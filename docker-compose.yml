@@ -8,4 +8,4 @@ services:
         expose:
             - '1167'
         volumes:
-            - ~/app:/usr/src/app:ro
+            - ~/app:/app:ro
