@@ -1,5 +1,5 @@
 # Use an official Node runtime as the base image
-FROM node:20-alpine
+FROM node:20
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -15,8 +15,6 @@ COPY . ./
 
 # Build the app
 RUN npm run build:docker
-
-COPY . ./
 
 # Install serve to run the application
 RUN npm install -g serve
