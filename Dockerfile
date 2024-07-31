@@ -13,15 +13,13 @@ RUN npm install
 # Copy project files and folders to the current working directory (i.e. 'app' folder)
 COPY . .
 
-RUN npm install -g tsc
-
 # Install serve to run the application
 RUN npm install -g serve
 
 # Build the app
-RUN npm run build
+RUN npm run build:docker
 
 EXPOSE 1167
 
 # Serve the app on port 5000
-CMD ["serve", "-s", "dist", "-l", "0.0.0.0", "-p", "1167"]
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:1167"]
