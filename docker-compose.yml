@@ -8,4 +8,4 @@ services:
         expose:
             - '1167'
         volumes:
-            - ~/app:/app:ro
+            - ~/app/simple-cms-frontend:/app:ro
